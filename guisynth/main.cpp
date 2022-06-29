@@ -27,7 +27,7 @@
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    QApplication::setOrganizationName("LinuxEASSynth");
+    QApplication::setOrganizationName("SonivoxEAS");
     QApplication::setApplicationName("GUISynth");
     QApplication::setApplicationVersion(TOSTRING(VERSION));
     QCommandLineParser parser;

@@ -454,13 +454,13 @@ SynthRenderer::playbackCompleted()
 {
     EAS_RESULT result;
     EAS_STATE state = EAS_STATE_EMPTY;
-    if ((result = EAS_State(m_easData, m_fileHandle, &state)) != EAS_SUCCESS)
+    if (m_fileHandle != 0 && (result = EAS_State(m_easData, m_fileHandle, &state)) != EAS_SUCCESS)
     {
         qWarning() << "EAS_State:" << result;
     }
     //qDebug() << Q_FUNC_INFO << state;
     /* is playback complete */
-    return ((state == EAS_STATE_STOPPED) || (state == EAS_STATE_ERROR));
+    return ((state == EAS_STATE_STOPPED) || (state == EAS_STATE_ERROR) || (state == EAS_STATE_EMPTY));
 }
 
 void
@@ -469,7 +469,7 @@ SynthRenderer::closePlayback()
     qDebug() << Q_FUNC_INFO;
     EAS_RESULT result = EAS_SUCCESS;
     /* close the input file */
-    if ((result = EAS_CloseFile(m_easData, m_fileHandle)) != EAS_SUCCESS)
+    if (m_fileHandle != 0 && (result = EAS_CloseFile(m_easData, m_fileHandle)) != EAS_SUCCESS)
     {
         qWarning() << "EAS_CloseFile" << result;
     }

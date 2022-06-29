@@ -43,7 +43,7 @@ void signalHandler(int sig)
 int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
-    QCoreApplication::setOrganizationName("LinuxEASSynth");
+    QCoreApplication::setOrganizationName("SonivoxEAS");
     QCoreApplication::setApplicationName("cmdlnsynth");
     QCoreApplication::setApplicationVersion(QT_STRINGIFY(VERSION));
     signal(SIGINT, signalHandler);
