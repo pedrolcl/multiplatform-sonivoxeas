@@ -36,6 +36,8 @@ int main(int argc, char *argv[])
     parser.addHelpOption();
     QCommandLineOption bufferOption(QStringList() << "b" << "buffer","Audio buffer time in milliseconds", "bufer_time", "60");
     parser.addOption(bufferOption);
+    QCommandLineOption deviceOption(QStringList() << "d" << "device","Audio Device Name", "device_name", "default");
+    parser.addOption(deviceOption);
     parser.addPositionalArgument("file", "MIDI File (*.mid; *.kar)");
     parser.process(app);
     ProgramSettings::instance()->ReadFromNativeStorage();
@@ -45,6 +47,15 @@ int main(int argc, char *argv[])
             ProgramSettings::instance()->setBufferTime(n);
         else {
             fputs("Wrong buffer time.\n", stderr);
+            parser.showHelp(1);
+        }
+    }
+    if (parser.isSet(deviceOption)) {
+        QString s = parser.value(deviceOption);
+        if (!s.isEmpty()) {
+            ProgramSettings::instance()->setAudioDeviceName(s);
+        } else {
+            fputs("Wrong Device Name.\n", stderr);
             parser.showHelp(1);
         }
     }

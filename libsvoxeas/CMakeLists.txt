@@ -16,33 +16,33 @@ set( SOURCES
     filewrapper.cpp
 )
 
-add_library( svoxeas SHARED ${HEADERS} ${SOURCES} )
+add_library( mp_svoxeas SHARED ${HEADERS} ${SOURCES} )
 
-set_target_properties( svoxeas PROPERTIES 
+set_target_properties( mp_svoxeas PROPERTIES 
     VERSION ${PROJECT_VERSION}
     SOVERSION ${PROJECT_VERSION_MAJOR}
 )
 
-target_link_libraries( svoxeas 
+target_link_libraries( mp_svoxeas 
     PUBLIC
         sonivox
+        Qt${QT_VERSION_MAJOR}::Core
+        Qt${QT_VERSION_MAJOR}::Multimedia
     PRIVATE
-        Qt5::Core
         Drumstick::ALSA
-        PkgConfig::PULSE
 )
 
-target_include_directories( svoxeas
+target_include_directories( mp_svoxeas
     PUBLIC
       ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-target_compile_definitions( svoxeas PRIVATE
+target_compile_definitions( mp_svoxeas PRIVATE
     VERSION=${PROJECT_VERSION}
     $<$<CONFIG:RELEASE>:QT_NO_DEBUG_OUTPUT>
 )
 
-install( TARGETS svoxeas
+install( TARGETS mp_svoxeas
          DESTINATION ${CMAKE_INSTALL_LIBDIR} )
 
 install ( FILES ${HEADERS}

@@ -45,6 +45,9 @@ public:
     int chorusLevel() const;
     void setChorusLevel(int chorusLevel);
 
+    const QString &audioDeviceName() const;
+    void setAudioDeviceName(const QString &newAudioDeviceName);
+
 signals:
     void ValuesChanged();
 
@@ -65,6 +68,7 @@ private:
     int m_reverbWet;
     int m_chorusType;
     int m_chorusLevel;
+    QString m_audioDeviceName;
 };
 
 #endif // PROGRAMSETTINGS_H

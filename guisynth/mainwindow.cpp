@@ -28,6 +28,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_state(InitialState)
 {
     m_synth = new SynthController(ProgramSettings::instance()->bufferTime(), this);
+    m_synth->renderer()->setAudioDeviceName(ProgramSettings::instance()->audioDeviceName());
 
     ui->setupUi(this);
     ui->combo_Reverb->addItem(QStringLiteral("Large Hall"), 0);
@@ -73,6 +74,7 @@ MainWindow::initialize()
     int chorus = ui->combo_Chorus->findData(ProgramSettings::instance()->chorusType());
     ui->combo_Chorus->setCurrentIndex(chorus);
     ui->dial_Chorus->setValue(ProgramSettings::instance()->chorusLevel());
+    ui->audioOutput->setText( m_synth->renderer()->audioDeviceName() );
     m_synth->start();
 }
 

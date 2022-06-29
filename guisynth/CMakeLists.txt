@@ -8,31 +8,31 @@ set( HEADERS mainwindow.h )
 set( FORMS mainwindow.ui )
 set( RESOURCES guisynth.qrc )
 
-add_executable( guisynth
+add_executable( mp_guisynth
   ${SOURCES}
   ${HEADERS}
   ${FORMS}
   ${RESOURCES}
 )
 
-target_link_libraries( guisynth
-  Qt5::Widgets
+target_link_libraries( mp_guisynth
+  Qt${QT_VERSION_MAJOR}::Widgets
   Drumstick::ALSA
-  svoxeas
+  mp_svoxeas
 )
 
-target_compile_definitions( guisynth PRIVATE
+target_compile_definitions( mp_guisynth PRIVATE
     VERSION=${PROJECT_VERSION}
     $<$<CONFIG:RELEASE>:QT_NO_DEBUG_OUTPUT>
 )
 
-install( TARGETS guisynth 
+install( TARGETS mp_guisynth 
          DESTINATION ${CMAKE_INSTALL_BINDIR} )
 
 install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/icon.png
          DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/128x128
          RENAME sonivoxeas.png )
 
-install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/guisynth.desktop
+install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/mp_guisynth.desktop
          DESTINATION ${CMAKE_INSTALL_DATADIR}/applications 
          RENAME sonivoxeas.desktop )

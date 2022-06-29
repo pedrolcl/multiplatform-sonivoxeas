@@ -25,7 +25,6 @@
 #include <QWriteLocker>
 #include <eas_reverb.h>
 #include <eas_chorus.h>
-#include <pulse/simple.h>
 #include <drumstick/sequencererror.h>
 #include "synthrenderer.h"
 #include "filewrapper.h"
@@ -35,11 +34,11 @@ using namespace drumstick::ALSA;
 SynthRenderer::SynthRenderer(int bufTime, QObject *parent) : QObject(parent),
     m_Stopped(true),
     m_isPlaying(false),
-    m_bufferTime(bufTime)
+    m_requestedBufferTime(bufTime)
 {
     initALSA();
     initEAS();
-    initPulse();  
+    initAudioDevices();
 }
 
 void
@@ -109,41 +108,44 @@ SynthRenderer::initEAS()
     m_sampleRate = easConfig->sampleRate;
     m_bufferSize = easConfig->mixBufferSize;
     m_channels = easConfig->numChannels;
+    m_sample_size = CHAR_BIT * sizeof (EAS_PCM);
     qDebug() << Q_FUNC_INFO << "EAS bufferSize=" << m_bufferSize << " sampleRate=" << m_sampleRate << " channels=" << m_channels;
 }
 
 void
-SynthRenderer::initPulse()
+SynthRenderer::initAudio()
 {
-    pa_sample_spec samplespec;
-    pa_buffer_attr bufattr;
-    int period_bytes = 0;
-    char *server = 0;
-    char *device = 0;
-    int err;
+    QAudioFormat format;
+    format.setSampleRate(m_sampleRate);
+    format.setChannelCount(m_channels);
+    format.setSampleSize(m_sample_size);
+    format.setCodec("audio/pcm");
+    format.setSampleType(QAudioFormat::SignedInt);
 
-    samplespec.format = PA_SAMPLE_S16LE;
-    samplespec.channels = m_channels;
-    samplespec.rate = m_sampleRate;
-
-    period_bytes = pa_usec_to_bytes(m_bufferTime * 1000, &samplespec);
-    qDebug() << "period_bytes:" << period_bytes;
-    bufattr.maxlength = (int32_t)-1;
-    bufattr.tlength = period_bytes;
-    bufattr.minreq = (int32_t)-1;
-    bufattr.prebuf = (int32_t)-1;
-    bufattr.fragsize = (int32_t)-1;
-
-    m_pulseHandle = pa_simple_new (server, "SonivoxEAS", PA_STREAM_PLAYBACK,
-                    device, "Synthesizer output", &samplespec,
-                    NULL, /* pa_channel_map */
-                    &bufattr, &err);
-
-    if (!m_pulseHandle)
-    {
-      qCritical() << "Failed to create PulseAudio connection";
+    if (!m_audioDevice.isFormatSupported(format)) {
+        qCritical() << "Audio format not supported" << format;
+        return;
     }
-    qDebug() << Q_FUNC_INFO << "latency:" << pa_simple_get_latency(m_pulseHandle, &err);
+
+    qint64 requested_size = m_channels * (m_sample_size / CHAR_BIT) * m_requestedBufferTime * m_sampleRate / 1000;
+    qint64 period_bytes = m_channels * (m_sample_size / CHAR_BIT) * m_bufferSize;
+    qDebug() << Q_FUNC_INFO << "requested buffer sizes:" << period_bytes << requested_size;
+
+    m_audioOutput.reset(new QAudioOutput(m_audioDevice, format));
+    m_audioOutput->setBufferSize( qMax(period_bytes, requested_size) );
+    m_audioOutput->setCategory("MIDI Synthesizer");
+    QObject::connect(m_audioOutput.data(), &QAudioOutput::stateChanged, this, [](QAudio::State state){
+        qDebug() << "QAudioOutput state changed:" << state;
+    });
+}
+
+void SynthRenderer::initAudioDevices()
+{
+    m_availableDevices = QAudioDeviceInfo::availableDevices(QAudio::AudioOutput);
+    m_audioDevice = QAudioDeviceInfo::defaultOutputDevice();
+    /*foreach(auto dev, m_availableDevices) {
+        qDebug() << Q_FUNC_INFO << dev.deviceName();
+    }*/
 }
 
 SynthRenderer::~SynthRenderer()
@@ -165,9 +167,6 @@ SynthRenderer::~SynthRenderer()
           qWarning() << "EAS_Shutdown error: " << eas_res;
       }
     }
-
-    pa_simple_free(m_pulseHandle);
-
     qDebug() << Q_FUNC_INFO;
 }
 
@@ -211,8 +210,8 @@ SynthRenderer::subscribe(const QString& portName)
 void
 SynthRenderer::run()
 {
-    int pa_err;
-    unsigned char data[m_bufferSize * sizeof (EAS_PCM) * m_channels];
+    QByteArray audioData;
+    initAudio();
     qDebug() << Q_FUNC_INFO << "started";
     try {
         m_Client->setRealTimeInput(false);
@@ -222,27 +221,44 @@ SynthRenderer::run()
         if (m_files.length() > 0) {
             preparePlayback();
         }
+        QIODevice *iodevice = m_audioOutput->start();
+        qDebug() << "QAudioOutput started with buffer size =" << m_audioOutput->bufferSize();
+        audioData.reserve(m_audioOutput->bufferSize());
         while (!stopped()) {
             EAS_RESULT eas_res;
             EAS_I32 numGen = 0;
-            size_t bytes = 0;
             QCoreApplication::sendPostedEvents();
             if (m_isPlaying) {
                 int t = getPlaybackLocation();
                 emit playbackTime(t);
             }
+            if (m_audioOutput->state() == QAudio::SuspendedState || 
+                m_audioOutput->state() == QAudio::StoppedState) {
+                qDebug() << Q_FUNC_INFO << "leaving";
+                break;
+            }
             if (m_easData != 0)
             {
-                EAS_PCM *buffer = (EAS_PCM *) data;
-                eas_res = EAS_Render(m_easData, buffer, m_bufferSize, &numGen);
-                if (eas_res != EAS_SUCCESS) {
-                    qWarning() << "EAS_Render error:" << eas_res;
+                // synth audio rendering
+                while(audioData.size() < m_audioOutput->bufferSize()) {
+                    char data[m_bufferSize * sizeof (EAS_PCM) * m_channels];
+                    EAS_PCM *buffer = (EAS_PCM *) data;
+                    eas_res = EAS_Render(m_easData, buffer, m_bufferSize, &numGen);
+                    if (eas_res != EAS_SUCCESS) {
+                        qWarning() << "EAS_Render error:" << eas_res;
+                        break;
+                    } else {
+                        int bytes = numGen * sizeof(EAS_PCM) * m_channels;
+                        audioData.append(data, bytes);
+                    }
                 }
-                bytes += (size_t) numGen * sizeof(EAS_PCM) * m_channels;
-                // hand over to pulseaudio the rendered buffer
-                if (pa_simple_write (m_pulseHandle, data, bytes, &pa_err) < 0)
-                {
-                    qWarning() << "Error writing to PulseAudio connection:" << pa_err;
+                // hand over to audiooutput, pushing the rendered buffer
+                int written = iodevice->write(audioData);
+                if (written < 0 || m_audioOutput->error() != QAudio::NoError) {
+                    qWarning() << Q_FUNC_INFO << "write audio error:" << m_audioOutput->error();
+                    break;
+                } else if (written > 0) {
+                    audioData.remove(0, written);
                 }
             }
             if (m_isPlaying && playbackCompleted()) {
@@ -254,12 +270,13 @@ SynthRenderer::run()
                     preparePlayback();
                 }
             }
-            //qDebug() << Q_FUNC_INFO << pa_simple_get_latency(m_pulseHandle, &pa_err);
         }
         if (m_isPlaying) {
             closePlayback();
         }
         m_Client->stopSequencerInput();
+        m_audioOutput->stop();
+        qDebug() << "QAudioOutput stopped";
     } catch (const SequencerError& err) {
         qWarning() << "SequencerError exception. Error code: " << err.code()
                    << " (" << err.qstrError() << ")";
@@ -267,6 +284,31 @@ SynthRenderer::run()
     }
     qDebug() << Q_FUNC_INFO << "ended";
     emit finished();
+}
+
+const QAudioDeviceInfo &SynthRenderer::audioDevice() const
+{
+    return m_audioDevice;
+}
+
+void SynthRenderer::setAudioDevice(const QAudioDeviceInfo &newAudioDevice)
+{
+    m_audioDevice = newAudioDevice;
+}
+
+QString SynthRenderer::audioDeviceName() const
+{
+    return m_audioDevice.deviceName();
+}
+
+void SynthRenderer::setAudioDeviceName(const QString newName)
+{
+    foreach(auto device, m_availableDevices) {
+        if (device.deviceName() == newName) {
+            m_audioDevice = device;
+            break;
+        }
+    }
 }
 
 void

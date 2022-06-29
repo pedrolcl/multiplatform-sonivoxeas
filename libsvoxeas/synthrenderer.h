@@ -21,10 +21,11 @@
 
 #include <QObject>
 #include <QReadWriteLock>
+#include <QScopedPointer>
+#include <QAudioOutput>
 #include <drumstick/alsaclient.h>
 #include <drumstick/alsaport.h>
 #include <drumstick/alsaevent.h>
-#include <pulse/simple.h>
 #include "eas.h"
 #include "filewrapper.h"
 
@@ -49,10 +50,16 @@ public:
     void startPlayback(const QString fileName);
     void stopPlayback();
 
+    const QAudioDeviceInfo &audioDevice() const;
+    void setAudioDevice(const QAudioDeviceInfo &newAudioDevice);
+    QString audioDeviceName() const;
+    void setAudioDeviceName(const QString newName);
+
 private:
     void initALSA();
     void initEAS();
-    void initPulse();
+    void initAudio();
+    void initAudioDevices();
     void writeMIDIData(drumstick::ALSA::SequencerEvent *ev);
 
     void preparePlayback();
@@ -83,15 +90,17 @@ private:
     drumstick::ALSA::MidiCodec* m_codec;
 
     /* SONiVOX EAS */
-    int m_sampleRate, m_bufferSize, m_channels;
+    int m_sampleRate, m_bufferSize, m_channels, m_sample_size;
     EAS_DATA_HANDLE m_easData;
     EAS_HANDLE m_streamHandle;
     EAS_HANDLE m_fileHandle;
     FileWrapper *m_currentFile;
 
-    /* pulseaudio */
-    int m_bufferTime;
-    pa_simple *m_pulseHandle;
+    /* audio */
+    int m_requestedBufferTime;
+    QScopedPointer<QAudioOutput> m_audioOutput;
+    QList<QAudioDeviceInfo> m_availableDevices;
+    QAudioDeviceInfo m_audioDevice;
 };
 
 #endif /*SYNTHRENDERER_H_*/

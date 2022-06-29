@@ -1,15 +1,15 @@
-add_executable( cmdlnsynth main.cpp )
+add_executable( mp_cmdlnsynth main.cpp )
 
-target_link_libraries( cmdlnsynth
-    Qt5::Core
+target_link_libraries( mp_cmdlnsynth
+    Qt${QT_VERSION_MAJOR}::Core
     Drumstick::ALSA
-    svoxeas
+    mp_svoxeas
 )
 
-target_compile_definitions( cmdlnsynth PRIVATE
+target_compile_definitions( mp_cmdlnsynth PRIVATE
     VERSION=${PROJECT_VERSION}
     $<$<CONFIG:RELEASE>:QT_NO_DEBUG_OUTPUT>
 )
 
-install( TARGETS cmdlnsynth 
+install( TARGETS mp_cmdlnsynth 
          DESTINATION ${CMAKE_INSTALL_BINDIR} )

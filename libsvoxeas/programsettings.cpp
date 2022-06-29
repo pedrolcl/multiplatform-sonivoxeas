@@ -72,6 +72,7 @@ void ProgramSettings::internalRead(QSettings &settings)
     m_reverbWet = settings.value("ReverbWet", 25800).toInt();
     m_chorusType = settings.value("ChorusType", -1).toInt();
     m_chorusLevel = settings.value("ChorusLevel", 0).toInt();
+    m_audioDeviceName = settings.value("AudioDevice", "default").toString();
     emit ValuesChanged();
 }
 
@@ -82,7 +83,18 @@ void ProgramSettings::internalSave(QSettings &settings)
     settings.setValue("ReverbWet", m_reverbWet);
     settings.setValue("ChorusType", m_chorusType);
     settings.setValue("ChorusLevel", m_chorusLevel);
+    settings.setValue("AudioDevice", m_audioDeviceName);
     settings.sync();
+}
+
+const QString &ProgramSettings::audioDeviceName() const
+{
+    return m_audioDeviceName;
+}
+
+void ProgramSettings::setAudioDeviceName(const QString &newAudioDeviceName)
+{
+    m_audioDeviceName = newAudioDeviceName;
 }
 
 int ProgramSettings::chorusLevel() const

@@ -57,11 +57,13 @@ int main(int argc, char *argv[])
     QCommandLineOption wetOption(QStringList() << "w" << "wet", "Reverb wet (0..32765).", "reverb_wet", "25800");
     QCommandLineOption chorusOption(QStringList() << "c" << "chorus", "Chorus type (none=-1,presets=0,1,2,3).", "chorus_type", "-1");
     QCommandLineOption levelOption(QStringList() << "l" << "level", "Chorus level (0..32765).", "chorus_level", "0");
+    QCommandLineOption deviceOption(QStringList() << "d" << "device","Audio Device Name", "device_name", "default");
     parser.addOption(bufferOption);
     parser.addOption(reverbOption);
     parser.addOption(chorusOption);
     parser.addOption(wetOption);
     parser.addOption(levelOption);
+    parser.addOption(deviceOption);
     parser.addPositionalArgument("files", "MIDI Files (.mid;.kar)", "[files ...]");
     parser.process(app);
     ProgramSettings::instance()->ReadFromNativeStorage();
@@ -110,7 +112,17 @@ int main(int argc, char *argv[])
             parser.showHelp(1);
         }
     }
+    if (parser.isSet(deviceOption)) {
+        QString s = parser.value(deviceOption);
+        if (!s.isEmpty()) {
+            ProgramSettings::instance()->setAudioDeviceName(s);
+        } else {
+            fputs("Wrong Device Name.\n", stderr);
+            parser.showHelp(1);
+        }
+    }
     synth = new SynthController(ProgramSettings::instance()->bufferTime());
+    synth->renderer()->setAudioDeviceName(ProgramSettings::instance()->audioDeviceName());
     synth->renderer()->setReverbWet(ProgramSettings::instance()->reverbWet());
     synth->renderer()->initReverb(ProgramSettings::instance()->reverbType());
     synth->renderer()->setChorusLevel(ProgramSettings::instance()->chorusLevel());
