@@ -118,9 +118,13 @@ SynthRenderer::initAudio()
     QAudioFormat format;
     format.setSampleRate(m_sampleRate);
     format.setChannelCount(m_channels);
-    format.setSampleSize(m_sample_size);
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+    format.setSample(m_sample_size);
     format.setCodec("audio/pcm");
-    format.setSampleType(QAudioFormat::SignedInt);
+    format.setSampleFormat(QAudioFormat::SignedInt);
+#else
+    format.setSampleFormat(QAudioFormat::Int16);
+#endif
 
     if (!m_audioDevice.isFormatSupported(format)) {
         qCritical() << "Audio format not supported" << format;
@@ -131,19 +135,30 @@ SynthRenderer::initAudio()
     qint64 period_bytes = m_channels * (m_sample_size / CHAR_BIT) * m_bufferSize;
     qDebug() << Q_FUNC_INFO << "requested buffer sizes:" << period_bytes << requested_size;
 
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
     m_audioOutput.reset(new QAudioOutput(m_audioDevice, format));
-    m_audioOutput->setBufferSize( qMax(period_bytes, requested_size) );
     m_audioOutput->setCategory("MIDI Synthesizer");
     QObject::connect(m_audioOutput.data(), &QAudioOutput::stateChanged, this, [](QAudio::State state){
+#else
+    m_audioOutput.reset(new QAudioSink(m_audioDevice, format));
+    QObject::connect(m_audioOutput.data(), &QAudioSink::stateChanged, this, [](QAudio::State state){
+#endif
         qDebug() << "QAudioOutput state changed:" << state;
     });
+    m_audioOutput->setBufferSize( qMax(period_bytes, requested_size) );
 }
 
 void SynthRenderer::initAudioDevices()
 {
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
     m_availableDevices = QAudioDeviceInfo::availableDevices(QAudio::AudioOutput);
     m_audioDevice = QAudioDeviceInfo::defaultOutputDevice();
-    /*foreach(auto dev, m_availableDevices) {
+#else
+    QMediaDevices devices;
+    m_availableDevices = devices.audioOutputs();
+    m_audioDevice = devices.defaultAudioOutput();
+#endif
+    /*foreach(auto &dev, m_availableDevices) {
         qDebug() << Q_FUNC_INFO << dev.deviceName();
     }*/
 }
@@ -286,6 +301,7 @@ SynthRenderer::run()
     emit finished();
 }
 
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
 const QAudioDeviceInfo &SynthRenderer::audioDevice() const
 {
     return m_audioDevice;
@@ -295,16 +311,35 @@ void SynthRenderer::setAudioDevice(const QAudioDeviceInfo &newAudioDevice)
 {
     m_audioDevice = newAudioDevice;
 }
+#else
+const QAudioDevice &SynthRenderer::audioDevice() const
+{
+    return m_audioDevice;
+}
+
+void SynthRenderer::setAudioDevice(const QAudioDevice &newAudioDevice)
+{
+    m_audioDevice = newAudioDevice;
+}
+#endif
 
 QString SynthRenderer::audioDeviceName() const
 {
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
     return m_audioDevice.deviceName();
+#else
+    return m_audioDevice.description();
+#endif
 }
 
 void SynthRenderer::setAudioDeviceName(const QString newName)
 {
     foreach(auto device, m_availableDevices) {
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
         if (device.deviceName() == newName) {
+#else
+        if (device.description() == newName) {
+#endif
             m_audioDevice = device;
             break;
         }

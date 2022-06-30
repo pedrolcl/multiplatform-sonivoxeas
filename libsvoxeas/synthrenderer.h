@@ -22,7 +22,13 @@
 #include <QObject>
 #include <QReadWriteLock>
 #include <QScopedPointer>
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
 #include <QAudioOutput>
+#else
+#include <QAudioSink>
+#include <QAudioDevice>
+#include <QMediaDevices>
+#endif
 #include <drumstick/alsaclient.h>
 #include <drumstick/alsaport.h>
 #include <drumstick/alsaevent.h>
@@ -50,8 +56,13 @@ public:
     void startPlayback(const QString fileName);
     void stopPlayback();
 
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
     const QAudioDeviceInfo &audioDevice() const;
     void setAudioDevice(const QAudioDeviceInfo &newAudioDevice);
+#else
+    const QAudioDevice &audioDevice() const;
+    void setAudioDevice(const QAudioDevice &newAudioDevice);
+#endif
     QString audioDeviceName() const;
     void setAudioDeviceName(const QString newName);
 
@@ -98,9 +109,15 @@ private:
 
     /* audio */
     int m_requestedBufferTime;
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
     QScopedPointer<QAudioOutput> m_audioOutput;
     QList<QAudioDeviceInfo> m_availableDevices;
     QAudioDeviceInfo m_audioDevice;
+#else
+    QScopedPointer<QAudioSink> m_audioOutput;
+    QList<QAudioDevice> m_availableDevices;
+    QAudioDevice m_audioDevice;
+#endif
 };
 
 #endif /*SYNTHRENDERER_H_*/
