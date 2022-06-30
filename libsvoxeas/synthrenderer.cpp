@@ -119,9 +119,9 @@ SynthRenderer::initAudio()
     format.setSampleRate(m_sampleRate);
     format.setChannelCount(m_channels);
 #if QT_VERSION < QT_VERSION_CHECK(6,0,0)
-    format.setSample(m_sample_size);
+    format.setSampleSize(m_sample_size);
     format.setCodec("audio/pcm");
-    format.setSampleFormat(QAudioFormat::SignedInt);
+    format.setSampleType(QAudioFormat::SignedInt);
 #else
     format.setSampleFormat(QAudioFormat::Int16);
 #endif
