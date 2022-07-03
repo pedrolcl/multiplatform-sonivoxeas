@@ -34,7 +34,8 @@ using namespace drumstick::rt;
 SynthRenderer::SynthRenderer(int bufTime, QObject *parent) : QObject(parent),
     m_Stopped(true),
     m_isPlaying(false),
-    m_requestedBufferTime(bufTime)
+    m_input(nullptr),
+	m_requestedBufferTime(bufTime)
 {
     initMIDI();
     initEAS();

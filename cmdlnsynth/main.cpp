@@ -168,8 +168,10 @@ int main(int argc, char *argv[])
     synth->renderer()->initChorus(ProgramSettings::instance()->chorusType());
     QObject::connect(&app, &QCoreApplication::aboutToQuit, synth, &QObject::deleteLater);
     QObject::connect(&app, &QCoreApplication::aboutToQuit, ProgramSettings::instance(), &ProgramSettings::SaveToNativeStorage);
-    QObject::connect(synth->renderer(), &SynthRenderer::playbackStopped, &app, &QCoreApplication::quit);
-    QObject::connect(synth->renderer(), &SynthRenderer::finished, &app, &QCoreApplication::quit);
+//  QObject::connect(synth->renderer(), &SynthRenderer::playbackStopped, &app, &QCoreApplication::quit);
+//  QObject::connect(synth->renderer(), &SynthRenderer::finished, &app, &QCoreApplication::quit);
+	QObject::connect(synth->renderer(), SIGNAL(playbackStopped()), &app, SLOT(quit()));
+	QObject::connect(synth->renderer(), SIGNAL(finished()), &app, SLOT(quit()));
     QStringList args = parser.positionalArguments();
     if (!args.isEmpty()) {
         for(int i = 0; i < args.length();  ++i) {

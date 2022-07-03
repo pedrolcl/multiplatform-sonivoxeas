@@ -54,7 +54,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->openButton, &QToolButton::clicked, this, &MainWindow::openFile);
     connect(ui->playButton, &QToolButton::clicked, this, &MainWindow::playSong);
     connect(ui->stopButton, &QToolButton::clicked, this, &MainWindow::stopSong);
-    connect(m_synth->renderer(), &SynthRenderer::playbackStopped, this, &MainWindow::songStopped);
+    //connect(m_synth->renderer(), &SynthRenderer::playbackStopped, this, &MainWindow::songStopped);
+	connect(m_synth->renderer(), SIGNAL(playbackStopped()), this, SLOT(songStopped()));
     m_songFile = QString();
     updateState(EmptyState);
     initialize();
