@@ -67,6 +67,20 @@ void ProgramSettings::SaveToFile(const QString& filepath)
 
 void ProgramSettings::internalRead(QSettings &settings)
 {
+    const QString DEFAULT_DRIVER = 
+#if defined(Q_OS_LINUX)
+        QStringLiteral("ALSA");
+#elif defined(Q_OS_WINDOWS)
+        QStringLiteral("Windows MM");
+#elif defined(Q_OS_MACOS)
+        QStringLiteral("CoreMIDI");
+#elif defined(Q_OS_UNIX)
+        QStringLiteral("OSS");
+#else
+        QStringLiteral("Network");
+#endif
+    m_midiDriver = settings.value("MIDIDriver", DEFAULT_DRIVER).toString();
+    m_portName = settings.value("PortName", QLatin1String()).toString();
     m_bufferTime = settings.value("BufferTime", 60).toInt();
     m_reverbType = settings.value("ReverbType", 1).toInt();
     m_reverbWet = settings.value("ReverbWet", 25800).toInt();
@@ -78,6 +92,8 @@ void ProgramSettings::internalRead(QSettings &settings)
 
 void ProgramSettings::internalSave(QSettings &settings)
 {
+    settings.setValue("MIDIDriver", m_midiDriver);
+    settings.setValue("PortName", m_portName);
     settings.setValue("BufferTime", m_bufferTime);
     settings.setValue("ReverbType", m_reverbType);
     settings.setValue("ReverbWet", m_reverbWet);
@@ -85,6 +101,26 @@ void ProgramSettings::internalSave(QSettings &settings)
     settings.setValue("ChorusLevel", m_chorusLevel);
     settings.setValue("AudioDevice", m_audioDeviceName);
     settings.sync();
+}
+
+const QString &ProgramSettings::portName() const
+{
+    return m_portName;
+}
+
+void ProgramSettings::setPortName(const QString &newPortName)
+{
+    m_portName = newPortName;
+}
+
+const QString &ProgramSettings::midiDriver() const
+{
+    return m_midiDriver;
+}
+
+void ProgramSettings::setMidiDriver(const QString &newMidiDriver)
+{
+    m_midiDriver = newMidiDriver;
 }
 
 const QString &ProgramSettings::audioDeviceName() const

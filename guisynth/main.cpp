@@ -28,19 +28,37 @@ int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
     QApplication::setOrganizationName("SonivoxEAS");
-    QApplication::setApplicationName("GUISynth");
+    QApplication::setApplicationName("mp_GUISynth");
     QApplication::setApplicationVersion(TOSTRING(VERSION));
     QCommandLineParser parser;
     parser.setApplicationDescription("GUI MIDI Synthesizer and Player");
     parser.addVersionOption();
     parser.addHelpOption();
-    QCommandLineOption bufferOption(QStringList() << "b" << "buffer","Audio buffer time in milliseconds", "bufer_time", "60");
+    QCommandLineOption driverOption({"d", "driver"}, "MIDI Driver.", "driver");
+    QCommandLineOption portOption({"p", "port"}, "MIDI Port.", "port");
+    QCommandLineOption listOption({"s", "subs"}, "List available MIDI Ports.");
+    QCommandLineOption bufferOption({"b", "buffer"}, "Audio buffer time in milliseconds", "bufer_time", "60");
+    QCommandLineOption deviceOption({"a", "audiodevice"}, "Audio Device Name", "device_name", "default");
+    parser.addOption(driverOption);
+    parser.addOption(portOption);
+    parser.addOption(listOption);
     parser.addOption(bufferOption);
-    QCommandLineOption deviceOption(QStringList() << "d" << "device","Audio Device Name", "device_name", "default");
     parser.addOption(deviceOption);
     parser.addPositionalArgument("file", "MIDI File (*.mid; *.kar)");
     parser.process(app);
     ProgramSettings::instance()->ReadFromNativeStorage();
+    if (parser.isSet(driverOption)) {
+        QString driverName = parser.value(driverOption);
+        if (!driverName.isEmpty()) {
+            ProgramSettings::instance()->setMidiDriver(driverName);
+        }
+    }
+    if(parser.isSet(portOption)) {
+        QString portName = parser.value(portOption);
+        if (!portName.isEmpty()) {
+            ProgramSettings::instance()->setPortName(portName);
+        }
+    }
     if (parser.isSet(bufferOption)) {
         int n = parser.value(bufferOption).toInt();
         if (n > 0)
@@ -60,6 +78,10 @@ int main(int argc, char *argv[])
         }
     }
     MainWindow w;
+    if (parser.isSet(listOption)) {
+        w.listPorts();
+        return EXIT_SUCCESS;
+    }
     QStringList args = parser.positionalArguments();
     if (!args.isEmpty())
         w.readFile(args.first());

@@ -29,50 +29,40 @@
 #include "synthrenderer.h"
 #include "filewrapper.h"
 
-using namespace drumstick::ALSA;
+using namespace drumstick::rt;
 
 SynthRenderer::SynthRenderer(int bufTime, QObject *parent) : QObject(parent),
     m_Stopped(true),
     m_isPlaying(false),
     m_requestedBufferTime(bufTime)
 {
-    initALSA();
+    initMIDI();
     initEAS();
     initAudioDevices();
 }
 
 void
-SynthRenderer::initALSA()
+SynthRenderer::initMIDI()
 {
-    const QString errorstr = "Fatal error from the ALSA sequencer. "
-        "This usually happens when the kernel doesn't have ALSA support, "
-        "or the device node (/dev/snd/seq) doesn't exists, "
-        "or the kernel module (snd_seq) is not loaded. "
-        "Please check your ALSA/MIDI configuration.";
-    try {
-        m_Client = new MidiClient(this);
-        m_Client->open();
-        m_Client->setClientName("Sonivox EAS");
-        connect( m_Client, &MidiClient::eventReceived,
-                 this, &SynthRenderer::sequencerEvent);
-        m_Port = new MidiPort(this);
-        m_Port->attach( m_Client );
-        m_Port->setPortName("Synthesizer input");
-        m_Port->setCapability( SND_SEQ_PORT_CAP_WRITE |
-                               SND_SEQ_PORT_CAP_SUBS_WRITE );
-        m_Port->setPortType( SND_SEQ_PORT_TYPE_APPLICATION |
-                             SND_SEQ_PORT_TYPE_MIDI_GENERIC );
-        connect( m_Port, &MidiPort::subscribed,
-                 this, &SynthRenderer::subscription);
-        m_Port->subscribeFromAnnounce();
-        m_codec = new MidiCodec(256);
-        m_codec->enableRunningStatus(false);
-    } catch (const SequencerError& ex) {
-        qCritical() << errorstr + "Returned error was:" + ex.qstrError();
-    } catch (...) {
-        qCritical() << errorstr;
+    const QString DEFAULT_DRIVER = 
+#if defined(Q_OS_LINUX)
+        QStringLiteral("ALSA");
+#elif defined(Q_OS_WINDOWS)
+        QStringLiteral("Windows MM");
+#elif defined(Q_OS_MACOS)
+        QStringLiteral("CoreMIDI");
+#elif defined(Q_OS_UNIX)
+        QStringLiteral("OSS");
+#else
+        QStringLiteral("Network");
+#endif
+    qDebug() << Q_FUNC_INFO << DEFAULT_DRIVER;
+    if (m_midiDriver.isEmpty()) {
+        setMidiDriver(DEFAULT_DRIVER);
     }
-    qDebug() << Q_FUNC_INFO;
+    if (m_input == nullptr) {
+        qWarning() << "Input Backend is Missing. You may need to set the DRUMSTICKRT environment variable";
+    }
 }
 
 void
@@ -165,11 +155,9 @@ void SynthRenderer::initAudioDevices()
 
 SynthRenderer::~SynthRenderer()
 {
-    m_Port->detach();
-    delete m_Port;
-    m_Client->close();
-    delete m_Client;
-    delete m_codec;
+    if (m_input != nullptr) {
+        m_input->close();
+    }
 
     EAS_RESULT eas_res;
     if (m_easData != 0 && m_streamHandle != 0) {
@@ -200,25 +188,40 @@ SynthRenderer::stop()
     m_Stopped = true;
 }
 
-void
-SynthRenderer::subscription(MidiPort*, Subscription* subs)
+QStringList 
+SynthRenderer::connections() const
 {
-    qDebug() << "Subscription made from "
-             << subs->getSender()->client << ":"
-             << subs->getSender()->port;
+    Q_ASSERT(m_input != nullptr);
+    QStringList result;
+    auto avail = m_input->connections(true);
+    foreach(const auto &c, avail) {
+        result << c.first;
+    }
+    return result;
+}
+
+QString 
+SynthRenderer::subscription() const
+{
+    return m_portName;
 }
 
 void
 SynthRenderer::subscribe(const QString& portName)
 {
-    try {
-        qDebug() << "Trying to subscribe " << portName.toLocal8Bit().data();
-        m_Port->subscribeFrom(portName);
-    } catch (const SequencerError& err) {
-        qWarning() << "SequencerError exception. Error code: " << err.code()
-                   << " (" << err.qstrError() << ")";
-        qWarning() << "Location: " << err.location();
-        throw err;
+    qDebug() << Q_FUNC_INFO << portName;
+    Q_ASSERT(m_input != nullptr);
+    auto avail = m_input->connections(true);
+    auto it = std::find_if(avail.constBegin(), avail.constEnd(),
+                           [portName](const MIDIConnection& c) { 
+                               return c.first == portName; 
+                           });
+    m_input->close();
+    if (it == avail.constEnd()) {
+        MIDIConnection conn;
+        m_input->open(conn);
+    } else {
+        m_input->open(*it);
     }
 }
 
@@ -229,8 +232,16 @@ SynthRenderer::run()
     initAudio();
     qDebug() << Q_FUNC_INFO << "started";
     try {
-        m_Client->setRealTimeInput(false);
-        m_Client->startSequencerInput();
+        if (m_input != nullptr) {
+            m_input->disconnect();
+            QObject::connect(m_input, &MIDIInput::midiNoteOn, this, &SynthRenderer::noteOn);
+            QObject::connect(m_input, &MIDIInput::midiNoteOff, this, &SynthRenderer::noteOff);
+            QObject::connect(m_input, &MIDIInput::midiKeyPressure, this, &SynthRenderer::keyPressure);
+            QObject::connect(m_input, &MIDIInput::midiController, this, &SynthRenderer::controller);
+            QObject::connect(m_input, &MIDIInput::midiProgram, this, &SynthRenderer::program);
+            QObject::connect(m_input, &MIDIInput::midiChannelPressure, this, &SynthRenderer::channelPressure);
+            QObject::connect(m_input, &MIDIInput::midiPitchBend, this, &SynthRenderer::pitchBend);
+        }
         m_Stopped = false;
         m_isPlaying = false;
         if (m_files.length() > 0) {
@@ -289,16 +300,29 @@ SynthRenderer::run()
         if (m_isPlaying) {
             closePlayback();
         }
-        m_Client->stopSequencerInput();
         m_audioOutput->stop();
         qDebug() << "QAudioOutput stopped";
-    } catch (const SequencerError& err) {
-        qWarning() << "SequencerError exception. Error code: " << err.code()
-                   << " (" << err.qstrError() << ")";
-        qWarning() << "Location: " << err.location();
+    } catch (...) {
+        qWarning() << "Error! exception";
     }
     qDebug() << Q_FUNC_INFO << "ended";
     emit finished();
+}
+
+const QString SynthRenderer::midiDriver() const
+{
+    return m_midiDriver;
+}
+
+void SynthRenderer::setMidiDriver(const QString newMidiDriver)
+{
+    if (m_midiDriver != newMidiDriver) {
+        m_midiDriver = newMidiDriver;
+        if (m_input != nullptr) {
+            m_input->close();
+        }
+        m_input = m_man.inputBackendByName(m_midiDriver);
+    }
 }
 
 #if QT_VERSION < QT_VERSION_CHECK(6,0,0)
@@ -323,6 +347,20 @@ void SynthRenderer::setAudioDevice(const QAudioDevice &newAudioDevice)
 }
 #endif
 
+
+QStringList SynthRenderer::availableAudioDevices() const
+{
+    QStringList result;
+    foreach(const auto &device, m_availableDevices) {
+    #if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+        result << device.deviceName();
+    #else
+        result << device.description();
+    #endif
+    }
+    return result;
+}
+
 QString SynthRenderer::audioDeviceName() const
 {
 #if QT_VERSION < QT_VERSION_CHECK(6,0,0)
@@ -346,33 +384,79 @@ void SynthRenderer::setAudioDeviceName(const QString newName)
     }
 }
 
-void
-SynthRenderer::sequencerEvent(SequencerEvent *ev)
+void SynthRenderer::noteOn(int chan, int note, int vel) 
 {
-    switch (ev->getSequencerType()) {
-    case SND_SEQ_EVENT_CHANPRESS:
-    case SND_SEQ_EVENT_NOTEOFF:
-    case SND_SEQ_EVENT_NOTEON:
-    case SND_SEQ_EVENT_CONTROLLER:
-    case SND_SEQ_EVENT_KEYPRESS:
-    case SND_SEQ_EVENT_PGMCHANGE:
-    case SND_SEQ_EVENT_PITCHBEND:
-        writeMIDIData(ev);
-        break;
-    }
-    delete ev;
+    QByteArray ev(3, 0);
+    ev[0] = MIDI_STATUS_NOTEON | chan;
+    ev[1] = 0xff & note;
+    ev[2] = 0xff & vel;
+    writeMIDIData(ev);
+}
+
+void SynthRenderer::noteOff(int chan, int note, int vel) 
+{
+    QByteArray ev(3, 0);
+    ev[0] = MIDI_STATUS_NOTEOFF | chan;
+    ev[1] = 0xff & note;
+    ev[2] = 0xff & vel;
+    writeMIDIData(ev);
+}
+
+void SynthRenderer::keyPressure(const int chan, const int note, const int value) 
+{
+    QByteArray ev(3, 0);
+    ev[0] = MIDI_STATUS_KEYPRESURE | chan;
+    ev[1] = 0xff & note;
+    ev[2] = 0xff & value;
+    writeMIDIData(ev);
+}
+
+void SynthRenderer::controller(const int chan, const int control, const int value) 
+{
+    QByteArray ev(3, 0);
+    ev[0] = MIDI_STATUS_CONTROLCHANGE | chan;
+    ev[1] = 0xff & control;
+    ev[2] = 0xff & value;
+    writeMIDIData(ev);
+}
+
+void SynthRenderer::program(const int chan, const int program) 
+{
+    QByteArray ev(2, 0);
+    ev[0] = MIDI_STATUS_PROGRAMCHANGE | chan;
+    ev[1] = 0xff & program;
+    writeMIDIData(ev);
+}
+
+void SynthRenderer::channelPressure(const int chan, const int value) 
+{
+    QByteArray ev(2, 0);
+    ev[0] = MIDI_STATUS_CHANNELPRESSURE | chan;
+    ev[1] = 0xff & value;
+    writeMIDIData(ev);
+}
+
+void SynthRenderer::pitchBend(const int chan, const int v) 
+{
+    QByteArray ev(3, 0);
+    int value = 8192 + v;
+    ev[0] = MIDI_STATUS_PITCHBEND | chan;
+    ev[1] = MIDI_LSB(value);
+    ev[2] = MIDI_MSB(value);
+    qDebug() << Q_FUNC_INFO << chan << v << ev;;
+    writeMIDIData(ev);
 }
 
 void
-SynthRenderer::writeMIDIData(SequencerEvent *ev)
+SynthRenderer::writeMIDIData(QByteArray &ev)
 {
     EAS_RESULT eas_res = EAS_ERROR_ALREADY_STOPPED;
-    EAS_I32 count;
-    EAS_U8 buffer[256];
+    EAS_I32 count = ev.size();
+    EAS_U8 buffer[count];
 
-    if (m_easData != 0 && m_streamHandle != 0)
+    if (m_easData != 0 && m_streamHandle != 0 && !ev.isEmpty())
     {
-        count = m_codec->decode((unsigned char *)&buffer, sizeof(buffer), ev->getHandle());
+        ::memcpy(buffer, ev.data(), ev.size());
         if (count > 0) {
             //qDebug() << Q_FUNC_INFO << QByteArray((char *)&buffer, count).toHex();
             eas_res = EAS_WriteMIDIStream(m_easData, m_streamHandle, buffer, count);

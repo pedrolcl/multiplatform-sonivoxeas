@@ -47,7 +47,13 @@ public:
 
     const QString &audioDeviceName() const;
     void setAudioDeviceName(const QString &newAudioDeviceName);
-
+    
+    const QString &midiDriver() const;
+    void setMidiDriver(const QString &newMidiDriver);
+    
+    const QString &portName() const;
+    void setPortName(const QString &newPortName);
+    
 signals:
     void ValuesChanged();
 
@@ -63,6 +69,8 @@ private:
     void internalRead(QSettings& settings);
     void internalSave(QSettings& settings);
 
+    QString m_midiDriver;
+    QString m_portName;
     int m_bufferTime;
     int m_reverbType;
     int m_reverbWet;

@@ -1,28 +1,27 @@
-Sonivox EAS for Linux and Qt
-============================
+Multiplatform Sonivox EAS for Qt
+================================
 
 This project is a Linux MIDI Synth library based on the Sonivox EAS Synthesizer published by Google on the Android Open Source Project.
 It is a real time GM synthesizer without needing external soundfonts, using embedded samples instead. It consumes very little resources, so
-it may be indicated in Linux projects for small embedded devices.
+it may be indicated in projects for small embedded devices.
 
-The library uses ALSA Sequencer MIDI input and PulseAudio output. Complete compile-time dependencies are:
-* Qt5, http://www.qt.io/
-* Drumstick 2, for ALSA MIDI input. http://sourceforge.net/projects/drumstick/
-* PulseAudio, for audio output. http://www.freedesktop.org/wiki/Software/PulseAudio/
+The library uses Drumstick::RT MIDI input and Qt audio output. Complete compile-time dependencies are:
+* Qt5 or Qt6, including QtMultimedia. http://www.qt.io/
+* Drumstick 2, for Drumstick::RT MIDI input. http://sourceforge.net/projects/drumstick/
 
-Just to clarify the Drumstick dependency: this project requires Drumstick::ALSA, but Drumstick does not depend on this project at all. There is a Drumstick::RT backend that includes the Sonivox synth as well, but both projects are independent regarding this synthesizer.
+Just to clarify the Drumstick dependency: this project requires Drumstick::RT, but Drumstick does not depend on this project at all. There is a Drumstick::RT backend that includes the Sonivox synth as well, but both projects are independent regarding this synthesizer.
 
 The project directory contains:
 * cmdlnsynth: Command line sample program using the synthesizer library
 * guisynth: GUI sample program using the synthesizer library
-* libsvoxeas: The Linux synthesizer shared library, using ALSA Sequencer and PulseAudio
+* libsvoxeas: The synthesizer shared library, using Drumstick::RT and Qt Multimedia
 * sonivox: The AOSP source files, with a qmake project file to compile and test under QtCreator as a static library
 
 Hacking
 -------
 
 Use your favorite IDE or text editor with the source files. My preference is QtCreator: https://www.qt.io/ide/
-To build, test and debug you may also find QtCreator interesting. You may also use CMake (>= 3.0) to build the project instead of qmake.
+To build, test and debug you may also find QtCreator interesting. You may also use CMake (>= 3.9) to build the project instead of qmake.
 
 Licenses
 --------

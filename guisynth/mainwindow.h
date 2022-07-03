@@ -43,6 +43,7 @@ public:
     void updateState(PlayerState newState);
     void initialize();
     void readFile(const QString &file);
+    void listPorts();
 
 protected:
     virtual void showEvent(QShowEvent *ev);

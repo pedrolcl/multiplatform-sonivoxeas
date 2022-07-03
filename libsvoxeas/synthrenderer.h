@@ -29,9 +29,8 @@
 #include <QAudioDevice>
 #include <QMediaDevices>
 #endif
-#include <drumstick/alsaclient.h>
-#include <drumstick/alsaport.h>
-#include <drumstick/alsaevent.h>
+#include <drumstick/backendmanager.h>
+#include <drumstick/rtmidiinput.h>
 #include "eas.h"
 #include "filewrapper.h"
 
@@ -43,6 +42,8 @@ public:
     explicit SynthRenderer(int bufTime, QObject *parent = 0);
     virtual ~SynthRenderer();
 
+    QStringList connections() const;
+    QString subscription() const;
     void subscribe(const QString& portName);
     void stop();
     bool stopped();
@@ -63,15 +64,20 @@ public:
     const QAudioDevice &audioDevice() const;
     void setAudioDevice(const QAudioDevice &newAudioDevice);
 #endif
+    QStringList availableAudioDevices() const;
+    
     QString audioDeviceName() const;
     void setAudioDeviceName(const QString newName);
 
+    const QString midiDriver() const;
+    void setMidiDriver(const QString newMidiDriver);
+
 private:
-    void initALSA();
+    void initMIDI();
     void initEAS();
     void initAudio();
     void initAudioDevices();
-    void writeMIDIData(drumstick::ALSA::SequencerEvent *ev);
+    void writeMIDIData(QByteArray &ev);
 
     void preparePlayback();
     bool playbackCompleted();
@@ -79,8 +85,13 @@ private:
     int getPlaybackLocation();
 
 public slots:
-    void subscription(drumstick::ALSA::MidiPort* port, drumstick::ALSA::Subscription* subs);
-    void sequencerEvent( drumstick::ALSA::SequencerEvent* ev );
+    void noteOn(int chan, int note, int vel);
+    void noteOff(int chan, int note, int vel);
+    void keyPressure(const int chan, const int note, const int value);
+    void controller(const int chan, const int control, const int value);
+    void program(const int chan, const int program);
+    void channelPressure(const int chan, const int value);
+    void pitchBend(const int chan, const int value);
     void run();
 
 signals:
@@ -95,10 +106,11 @@ private:
     QReadWriteLock m_mutex;
     QStringList m_files;
 
-    /* Drumstick ALSA*/
-    drumstick::ALSA::MidiClient* m_Client;
-    drumstick::ALSA::MidiPort* m_Port;
-    drumstick::ALSA::MidiCodec* m_codec;
+    /* Drumstick RT*/
+    QString m_midiDriver;
+    QString m_portName;
+    drumstick::rt::BackendManager m_man;
+    drumstick::rt::MIDIInput *m_input;
 
     /* SONiVOX EAS */
     int m_sampleRate, m_bufferSize, m_channels, m_sample_size;

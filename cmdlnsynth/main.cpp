@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
     QCoreApplication::setOrganizationName("SonivoxEAS");
-    QCoreApplication::setApplicationName("cmdlnsynth");
+    QCoreApplication::setApplicationName("mp_cmdlnsynth");
     QCoreApplication::setApplicationVersion(QT_STRINGIFY(VERSION));
     signal(SIGINT, signalHandler);
     signal(SIGTERM, signalHandler);
@@ -52,12 +52,18 @@ int main(int argc, char *argv[])
     parser.setApplicationDescription("Command Line MIDI Synthesizer and Player");
     parser.addVersionOption();
     parser.addHelpOption();
-    QCommandLineOption bufferOption(QStringList() << "b" << "buffer","Audio buffer time in milliseconds.", "buffer_time", "60");
-    QCommandLineOption reverbOption(QStringList() << "r" << "reverb", "Reverb type (none=-1,presets=0,1,2,3).", "reverb_type", "1");
-    QCommandLineOption wetOption(QStringList() << "w" << "wet", "Reverb wet (0..32765).", "reverb_wet", "25800");
-    QCommandLineOption chorusOption(QStringList() << "c" << "chorus", "Chorus type (none=-1,presets=0,1,2,3).", "chorus_type", "-1");
-    QCommandLineOption levelOption(QStringList() << "l" << "level", "Chorus level (0..32765).", "chorus_level", "0");
-    QCommandLineOption deviceOption(QStringList() << "d" << "device","Audio Device Name", "device_name", "default");
+    QCommandLineOption driverOption({"d", "driver"}, "MIDI Driver.", "driver");
+    QCommandLineOption portOption({"p", "port"}, "MIDI Port.", "port");
+    QCommandLineOption listOption({"s", "subs"}, "List available MIDI Ports.");
+    QCommandLineOption bufferOption({"b", "buffer"},"Audio buffer time in milliseconds.", "buffer_time", "60");
+    QCommandLineOption reverbOption({"r", "reverb"}, "Reverb type (none=-1,presets=0,1,2,3).", "reverb_type", "1");
+    QCommandLineOption wetOption({"w", "wet"}, "Reverb wet (0..32765).", "reverb_wet", "25800");
+    QCommandLineOption chorusOption({"c", "chorus"}, "Chorus type (none=-1,presets=0,1,2,3).", "chorus_type", "-1");
+    QCommandLineOption levelOption({"l", "level"}, "Chorus level (0..32765).", "chorus_level", "0");
+    QCommandLineOption deviceOption({"a", "audiodevice"}, "Audio Device Name", "device_name", "default");
+    parser.addOption(driverOption);
+    parser.addOption(portOption);
+    parser.addOption(listOption);
     parser.addOption(bufferOption);
     parser.addOption(reverbOption);
     parser.addOption(chorusOption);
@@ -67,6 +73,18 @@ int main(int argc, char *argv[])
     parser.addPositionalArgument("files", "MIDI Files (.mid;.kar)", "[files ...]");
     parser.process(app);
     ProgramSettings::instance()->ReadFromNativeStorage();
+    if (parser.isSet(driverOption)) {
+        QString driverName = parser.value(driverOption);
+        if (!driverName.isEmpty()) {
+            ProgramSettings::instance()->setMidiDriver(driverName);
+        }
+    }
+    if(parser.isSet(portOption)) {
+        QString portName = parser.value(portOption);
+        if (!portName.isEmpty()) {
+            ProgramSettings::instance()->setPortName(portName);
+        }
+    }
     if (parser.isSet(bufferOption)) {
         int n = parser.value(bufferOption).toInt();
         if (n > 0)
@@ -122,6 +140,27 @@ int main(int argc, char *argv[])
         }
     }
     synth = new SynthController(ProgramSettings::instance()->bufferTime());
+    synth->renderer()->setMidiDriver(ProgramSettings::instance()->midiDriver());
+    if (parser.isSet(listOption)) {
+        auto avail = synth->renderer()->connections();
+        fputs("Available MIDI Ports:\n", stdout);
+        foreach(const auto &p, avail) {
+            if (!p.isEmpty()) {
+                fputs(p.toLocal8Bit(), stdout);
+                fputs("\n", stdout);
+            }
+        }
+        auto audioavail = synth->renderer()->availableAudioDevices();
+        fputs("Available Audio Devices:\n", stdout);
+        foreach(const auto &p, audioavail) {
+            if (!p.isEmpty()) {
+                fputs(p.toLocal8Bit(), stdout);
+                fputs("\n", stdout);
+            }
+        }
+        return EXIT_SUCCESS;
+    }
+    synth->renderer()->subscribe(ProgramSettings::instance()->portName());
     synth->renderer()->setAudioDeviceName(ProgramSettings::instance()->audioDeviceName());
     synth->renderer()->setReverbWet(ProgramSettings::instance()->reverbWet());
     synth->renderer()->initReverb(ProgramSettings::instance()->reverbType());

@@ -29,7 +29,7 @@ target_link_libraries( mp_svoxeas
         Qt${QT_VERSION_MAJOR}::Core
         Qt${QT_VERSION_MAJOR}::Multimedia
     PRIVATE
-        Drumstick::ALSA
+        Drumstick::RT
 )
 
 target_include_directories( mp_svoxeas

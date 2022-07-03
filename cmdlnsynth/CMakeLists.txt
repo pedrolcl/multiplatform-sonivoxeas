@@ -2,7 +2,7 @@ add_executable( mp_cmdlnsynth main.cpp )
 
 target_link_libraries( mp_cmdlnsynth
     Qt${QT_VERSION_MAJOR}::Core
-    Drumstick::ALSA
+    Drumstick::RT
     mp_svoxeas
 )
 

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.9)
 project( multiplatform_sonivoxeas
-         VERSION 1.0.0
+         VERSION 1.4.0
          DESCRIPTION "Multiplatform Sonivox EAS for Qt" )
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -12,7 +12,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt5 Qt6 REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Core Gui Widgets Multimedia REQUIRED)
-find_package(Drumstick 2.6 COMPONENTS ALSA REQUIRED)
+find_package(Drumstick 2.6 COMPONENTS RT REQUIRED)
 
 include(GNUInstallDirs)
 

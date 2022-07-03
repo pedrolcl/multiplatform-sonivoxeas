@@ -28,6 +28,8 @@ MainWindow::MainWindow(QWidget *parent) :
     m_state(InitialState)
 {
     m_synth = new SynthController(ProgramSettings::instance()->bufferTime(), this);
+    m_synth->renderer()->setMidiDriver(ProgramSettings::instance()->midiDriver());
+    m_synth->renderer()->subscribe(ProgramSettings::instance()->portName());
     m_synth->renderer()->setAudioDeviceName(ProgramSettings::instance()->audioDeviceName());
 
     ui->setupUi(this);
@@ -138,6 +140,18 @@ MainWindow::readFile(const QString &file)
         m_songFile = f.absoluteFilePath();
         ui->lblSong->setText(f.fileName());
         updateState(StoppedState);
+    }
+}
+
+void MainWindow::listPorts()
+{
+    auto avail = m_synth->renderer()->connections();
+    fputs("Available MIDI Ports:\n", stdout);
+    foreach(const auto &p, avail) {
+        if (!p.isEmpty()) {
+            fputs(p.toLocal8Bit(), stdout);
+            fputs("\n", stdout);
+        }
     }
 }
 

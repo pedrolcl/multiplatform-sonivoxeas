@@ -57,7 +57,7 @@ set( SOURCES
   lib_src/eas_wtsynth.c 
 #lib_src/eas_xmf.c 
 #lib_src/eas_xmfdata.c 
-  lib_src/jet.c 
+#lib_src/jet.c 
   lib_src/wt_22khz.c 
 )
 
