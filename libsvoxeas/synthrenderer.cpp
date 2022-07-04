@@ -134,7 +134,7 @@ SynthRenderer::initAudio()
     m_audioOutput.reset(new QAudioSink(m_audioDevice, format));
     QObject::connect(m_audioOutput.data(), &QAudioSink::stateChanged, this, [](QAudio::State state){
 #endif
-        qDebug() << "QAudioOutput state changed:" << state;
+        qDebug() << "Audio Output state changed:" << state;
     });
     m_audioOutput->setBufferSize( qMax(period_bytes, requested_size) );
 }
@@ -249,7 +249,7 @@ SynthRenderer::run()
             preparePlayback();
         }
         QIODevice *iodevice = m_audioOutput->start();
-        qDebug() << "QAudioOutput started with buffer size =" << m_audioOutput->bufferSize();
+        qDebug() << "Audio Output started with buffer size =" << m_audioOutput->bufferSize() << "bytesfree= " << m_audioOutput->bytesFree();
         audioData.reserve(m_audioOutput->bufferSize());
         while (!stopped()) {
             EAS_RESULT eas_res;
@@ -267,12 +267,13 @@ SynthRenderer::run()
             if (m_easData != 0)
             {
                 // synth audio rendering
-                while(audioData.size() < m_audioOutput->bufferSize()) {
+                int maxlen = m_audioOutput->bufferSize();
+                while(audioData.size() < maxlen) {
                     char data[m_bufferSize * sizeof (EAS_PCM) * m_channels];
                     EAS_PCM *buffer = (EAS_PCM *) data;
                     eas_res = EAS_Render(m_easData, buffer, m_bufferSize, &numGen);
                     if (eas_res != EAS_SUCCESS) {
-                        qWarning() << "EAS_Render error:" << eas_res;
+                        qWarning() << Q_FUNC_INFO << "EAS_Render error:" << eas_res;
                         break;
                     } else {
                         int bytes = numGen * sizeof(EAS_PCM) * m_channels;
@@ -280,7 +281,8 @@ SynthRenderer::run()
                     }
                 }
                 // hand over to audiooutput, pushing the rendered buffer
-                int written = iodevice->write(audioData);
+                maxlen = qMin(maxlen, m_audioOutput->bytesFree());
+                int written = iodevice->write(audioData, maxlen);
                 if (written < 0 || m_audioOutput->error() != QAudio::NoError) {
                     qWarning() << Q_FUNC_INFO << "write audio error:" << m_audioOutput->error();
                     break;
@@ -391,6 +393,7 @@ void SynthRenderer::noteOn(int chan, int note, int vel)
     ev[0] = MIDI_STATUS_NOTEON | chan;
     ev[1] = 0xff & note;
     ev[2] = 0xff & vel;
+    //qDebug() << Q_FUNC_INFO << ev;
     writeMIDIData(ev);
 }
 
@@ -400,6 +403,7 @@ void SynthRenderer::noteOff(int chan, int note, int vel)
     ev[0] = MIDI_STATUS_NOTEOFF | chan;
     ev[1] = 0xff & note;
     ev[2] = 0xff & vel;
+    //qDebug() << Q_FUNC_INFO << ev;
     writeMIDIData(ev);
 }
 
@@ -444,7 +448,7 @@ void SynthRenderer::pitchBend(const int chan, const int v)
     ev[0] = MIDI_STATUS_PITCHBEND | chan;
     ev[1] = MIDI_LSB(value);
     ev[2] = MIDI_MSB(value);
-    qDebug() << Q_FUNC_INFO << chan << v << ev;;
+    //qDebug() << Q_FUNC_INFO << chan << v << ev;;
     writeMIDIData(ev);
 }
 

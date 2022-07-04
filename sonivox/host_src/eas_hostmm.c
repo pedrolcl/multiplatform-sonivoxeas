@@ -51,9 +51,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <limits.h>
-#ifndef __WIN32__
-#include <sys/mman.h>
-#endif
+//#include <sys/mman.h>
 #include <errno.h>
 #include <signal.h>
 #include <pthread.h>
