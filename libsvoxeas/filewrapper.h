@@ -23,6 +23,10 @@
 #include <QFile>
 #include <eas_types.h>
 
+#ifndef off64_t
+#define off64_t off_t
+#endif
+
 class FileWrapper
 {
 public:
