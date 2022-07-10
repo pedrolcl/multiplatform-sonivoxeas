@@ -45,6 +45,9 @@ public:
     int chorusLevel() const;
     void setChorusLevel(int chorusLevel);
 
+    int volumeLevel() const;
+    void setVolumeLevel(int newVolumeLevel);
+
     const QString &audioDeviceName() const;
     void setAudioDeviceName(const QString &newAudioDeviceName);
     
@@ -53,7 +56,7 @@ public:
     
     const QString &portName() const;
     void setPortName(const QString &newPortName);
-    
+
     static const QString DEFAULT_MIDI_DRIVER;
     static const QString DEFAULT_AUDIO_DEVICE;
     static const int DEFAULT_BUFFER_TIME;
@@ -61,6 +64,7 @@ public:
     static const int DEFAULT_REVERB_WET;
     static const int DEFAULT_CHORUS_TYPE;
     static const int DEFAULT_CHORUS_LEVEL;
+    static const int DEFAULT_VOLUME_LEVEL;
 
 signals:
     void ValuesChanged();
@@ -84,6 +88,7 @@ private:
     int m_reverbWet;
     int m_chorusType;
     int m_chorusLevel;
+    int m_volumeLevel;
     QString m_audioDeviceName;
 };
 

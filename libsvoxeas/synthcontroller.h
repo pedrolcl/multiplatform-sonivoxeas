@@ -49,6 +49,8 @@ public:
     QStringList availableAudioDevices() const;
     QString audioDeviceName() const;
     void setAudioDeviceName(const QString newName);
+    void setBufferSize(int milliseconds);
+    void setVolume(int volume);
 
 public slots:
     void start();

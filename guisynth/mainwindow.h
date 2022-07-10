@@ -19,6 +19,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include <QScopedPointer>
 #include <QMainWindow>
 #include "synthcontroller.h"
 
@@ -54,15 +55,20 @@ private slots:
     void chorusTypeChanged(int index);
     void reverbChanged(int value);
     void chorusChanged(int value);
+    void deviceChanged(int value);
+    void bufferSizeChanged(int value);
+    void volumeChanged(int value);
     void songStopped();
+    void underrunMessage();
+    void stallMessage();
 
     void openFile();
     void playSong();
     void stopSong();
 
 private:
-    Ui::MainWindow *ui;
-    SynthController *m_synth;
+    Ui::MainWindow *m_ui;
+    QScopedPointer<SynthController> m_synth;
     QString m_songFile;
     PlayerState m_state;
 };

@@ -191,5 +191,26 @@ SynthController::setAudioDeviceName(const QString newName)
         (m_audioDevice.isNull() || (audioDeviceName() != newName) )) {
         stop();
         m_audioDevice = m_availableDevices.value(newName);
+        initAudio();
+        start();
     }
+}
+
+void SynthController::setBufferSize(int milliseconds)
+{
+    qDebug() << Q_FUNC_INFO << milliseconds;
+    if (milliseconds != m_requestedBufferTime) {
+        stop();
+        m_requestedBufferTime = milliseconds;
+        start();
+    }
+}
+
+void SynthController::setVolume(int volume)
+{
+    qDebug() << Q_FUNC_INFO << volume;
+    qreal linearVolume = QAudio::convertVolume(volume / 100.0,
+                                               QAudio::LogarithmicVolumeScale,
+                                               QAudio::LinearVolumeScale);
+    m_audioOutput->setVolume(linearVolume);
 }

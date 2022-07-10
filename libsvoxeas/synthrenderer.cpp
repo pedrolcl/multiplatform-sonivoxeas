@@ -247,92 +247,15 @@ SynthRenderer::subscribe(const QString& portName)
     }
 }
 
-/*void
-SynthRenderer::run()
-{
-    QByteArray audioData;
-    initAudio();
-    qDebug() << Q_FUNC_INFO << "started";
-    try {
-        if (m_input != nullptr) {
-            m_input->disconnect();
-        }
-        m_Stopped = false;
-        m_isPlaying = false;
-        if (m_files.length() > 0) {
-            preparePlayback();
-        }
-//        QIODevice *iodevice = m_audioOutput->start();
-//        qDebug() << "Audio Output started with buffer size =" << m_audioOutput->bufferSize() << "bytesfree= " << m_audioOutput->bytesFree();
-//        audioData.reserve(m_audioOutput->bufferSize());
-        while (!stopped()) {
-            EAS_RESULT eas_res;
-            EAS_I32 numGen = 0;
-            QCoreApplication::sendPostedEvents();
-            if (m_isPlaying) {
-                int t = getPlaybackLocation();
-                emit playbackTime(t);
-            }
-            if (m_audioOutput->state() == QAudio::SuspendedState || 
-                m_audioOutput->state() == QAudio::StoppedState) {
-                qDebug() << Q_FUNC_INFO << "leaving";
-                break;
-            }
-            if (m_easData != 0)
-            {
-                // synth audio rendering
-                int maxlen = m_audioOutput->bufferSize();
-                while(audioData.size() < maxlen) {
-                    char data[m_renderFrames * sizeof (EAS_PCM) * m_channels];
-                    EAS_PCM *buffer = (EAS_PCM *) data;
-                    eas_res = EAS_Render(m_easData, buffer, m_renderFrames, &numGen);
-                    if (eas_res != EAS_SUCCESS) {
-                        qWarning() << Q_FUNC_INFO << "EAS_Render error:" << eas_res;
-                        break;
-                    } else {
-                        int bytes = numGen * sizeof(EAS_PCM) * m_channels;
-                        audioData.append(data, bytes);
-                    }
-                }
-                // hand over to audiooutput, pushing the rendered buffer
-//                maxlen = qMin(maxlen, m_audioOutput->bytesFree());
-//                int written = iodevice->write(audioData, maxlen);
-//                if (written < 0 || m_audioOutput->error() != QAudio::NoError) {
-//                    qWarning() << Q_FUNC_INFO << "write audio error:" << m_audioOutput->error();
-//                    break;
-//                } else if (written > 0) {
-//                    audioData.remove(0, written);
-//                }
-            }
-            if (m_isPlaying && playbackCompleted()) {
-                closePlayback();
-                if (m_files.length() == 0) {
-                    m_isPlaying = false;
-                    emit playbackStopped();
-                } else {
-                    preparePlayback();
-                }
-            }
-        }
-        if (m_isPlaying) {
-            closePlayback();
-        }
-        m_audioOutput->stop();
-        qDebug() << "QAudioOutput stopped";
-    } catch (...) {
-        qWarning() << "Error! exception";
-    }
-    qDebug() << Q_FUNC_INFO << "ended";
-    emit finished();
-}*/
-
-const QString SynthRenderer::midiDriver() const
+const QString 
+SynthRenderer::midiDriver() const
 {
     qDebug() << Q_FUNC_INFO << m_midiDriver;
     return m_midiDriver;
 }
 
-void SynthRenderer::setMidiDriver(const QString newMidiDriver)
+void 
+SynthRenderer::setMidiDriver(const QString newMidiDriver)
 {
     if (m_midiDriver != newMidiDriver) {
         qDebug() << Q_FUNC_INFO << newMidiDriver;
@@ -354,7 +277,8 @@ void SynthRenderer::setMidiDriver(const QString newMidiDriver)
     }
 }
 
-void SynthRenderer::noteOn(int chan, int note, int vel) 
+void 
+SynthRenderer::noteOn(int chan, int note, int vel) 
 {
     qDebug() << Q_FUNC_INFO << chan << note << vel;
     QByteArray ev(3, 0);
@@ -364,7 +288,8 @@ void SynthRenderer::noteOn(int chan, int note, int vel)
     writeMIDIData(ev);
 }
 
-void SynthRenderer::noteOff(int chan, int note, int vel) 
+void 
+SynthRenderer::noteOff(int chan, int note, int vel) 
 {
     qDebug() << Q_FUNC_INFO << chan << note << vel;
     QByteArray ev(3, 0);
@@ -374,8 +299,10 @@ void SynthRenderer::noteOff(int chan, int note, int vel)
     writeMIDIData(ev);
 }
 
-void SynthRenderer::keyPressure(const int chan, const int note, const int value) 
+void 
+SynthRenderer::keyPressure(const int chan, const int note, const int value) 
 {
+    qDebug() << Q_FUNC_INFO << chan << note << value;
     QByteArray ev(3, 0);
     ev[0] = MIDI_STATUS_KEYPRESURE | chan;
     ev[1] = 0xff & note;
@@ -383,8 +310,10 @@ void SynthRenderer::keyPressure(const int chan, const int note, const int value)
     writeMIDIData(ev);
 }
 
-void SynthRenderer::controller(const int chan, const int control, const int value) 
+void 
+SynthRenderer::controller(const int chan, const int control, const int value) 
 {
+    qDebug() << Q_FUNC_INFO << chan << control << value;
     QByteArray ev(3, 0);
     ev[0] = MIDI_STATUS_CONTROLCHANGE | chan;
     ev[1] = 0xff & control;
@@ -394,6 +323,7 @@ void SynthRenderer::controller(const int chan, const int control, const int valu
 
 void SynthRenderer::program(const int chan, const int program) 
 {
+    qDebug() << Q_FUNC_INFO << chan << program;
     QByteArray ev(2, 0);
     ev[0] = MIDI_STATUS_PROGRAMCHANGE | chan;
     ev[1] = 0xff & program;
@@ -402,6 +332,7 @@ void SynthRenderer::program(const int chan, const int program)
 
 void SynthRenderer::channelPressure(const int chan, const int value) 
 {
+    qDebug() << Q_FUNC_INFO << chan << value;
     QByteArray ev(2, 0);
     ev[0] = MIDI_STATUS_CHANNELPRESSURE | chan;
     ev[1] = 0xff & value;

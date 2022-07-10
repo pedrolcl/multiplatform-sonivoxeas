@@ -18,44 +18,49 @@
 
 #include <QCloseEvent>
 #include <QFileDialog>
+#include <QMessageBox>
 #include "mainwindow.h"
 #include "programsettings.h"
 #include "ui_mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow),
+    m_ui(new Ui::MainWindow),
     m_state(InitialState)
 {
-    m_synth = new SynthController(ProgramSettings::instance()->bufferTime(), this);
+    m_ui->setupUi(this);
+
+    m_synth.reset(new SynthController(ProgramSettings::instance()->bufferTime(), this));
     m_synth->renderer()->setMidiDriver(ProgramSettings::instance()->midiDriver());
     m_synth->renderer()->subscribe(ProgramSettings::instance()->portName());
-    //m_synth->renderer()->setAudioDeviceName(ProgramSettings::instance()->audioDeviceName());
 
-    ui->setupUi(this);
-    ui->combo_Reverb->addItem(QStringLiteral("Large Hall"), 0);
-    ui->combo_Reverb->addItem(QStringLiteral("Hall"), 1);
-    ui->combo_Reverb->addItem(QStringLiteral("Chamber"), 2);
-    ui->combo_Reverb->addItem(QStringLiteral("Room"), 3);
-    ui->combo_Reverb->addItem(QStringLiteral("None"), -1);
-    ui->combo_Reverb->setCurrentIndex(4);
-
-    ui->combo_Chorus->addItem(QStringLiteral("Preset 1"), 0);
-    ui->combo_Chorus->addItem(QStringLiteral("Preset 2"), 1);
-    ui->combo_Chorus->addItem(QStringLiteral("Preset 3"), 2);
-    ui->combo_Chorus->addItem(QStringLiteral("Preset 4"), 3);
-    ui->combo_Chorus->addItem(QStringLiteral("None"), -1);
-    ui->combo_Chorus->setCurrentIndex(4);
-
-    connect(ui->combo_Reverb, SIGNAL(currentIndexChanged(int)), SLOT(reverbTypeChanged(int)));
-    connect(ui->combo_Chorus, SIGNAL(currentIndexChanged(int)), SLOT(chorusTypeChanged(int)));
-    connect(ui->dial_Reverb, &QDial::valueChanged, this, &MainWindow::reverbChanged);
-    connect(ui->dial_Chorus, &QDial::valueChanged, this, &MainWindow::chorusChanged);
-    connect(ui->openButton, &QToolButton::clicked, this, &MainWindow::openFile);
-    connect(ui->playButton, &QToolButton::clicked, this, &MainWindow::playSong);
-    connect(ui->stopButton, &QToolButton::clicked, this, &MainWindow::stopSong);
-    //connect(m_synth->renderer(), &SynthRenderer::playbackStopped, this, &MainWindow::songStopped);
+    m_ui->combo_Device->addItems(m_synth->availableAudioDevices());
+    m_ui->combo_Reverb->addItem(QStringLiteral("Large Hall"), 0);
+    m_ui->combo_Reverb->addItem(QStringLiteral("Hall"), 1);
+    m_ui->combo_Reverb->addItem(QStringLiteral("Chamber"), 2);
+    m_ui->combo_Reverb->addItem(QStringLiteral("Room"), 3);
+    m_ui->combo_Reverb->addItem(QStringLiteral("None"), -1);
+    m_ui->combo_Reverb->setCurrentIndex(4);
+    m_ui->combo_Chorus->addItem(QStringLiteral("Preset 1"), 0);
+    m_ui->combo_Chorus->addItem(QStringLiteral("Preset 2"), 1);
+    m_ui->combo_Chorus->addItem(QStringLiteral("Preset 3"), 2);
+    m_ui->combo_Chorus->addItem(QStringLiteral("Preset 4"), 3);
+    m_ui->combo_Chorus->addItem(QStringLiteral("None"), -1);
+    m_ui->combo_Chorus->setCurrentIndex(4);
+    connect(m_ui->combo_Device, SIGNAL(currentIndexChanged(int)), this, SLOT(deviceChanged(int)));
+    connect(m_ui->combo_Reverb, SIGNAL(currentIndexChanged(int)), this, SLOT(reverbTypeChanged(int)));
+    connect(m_ui->combo_Chorus, SIGNAL(currentIndexChanged(int)), this, SLOT(chorusTypeChanged(int)));
+    connect(m_ui->bufTime, SIGNAL(valueChanged(int)), this, SLOT(bufferSizeChanged(int)));
+    connect(m_ui->volumeSlider, &QSlider::valueChanged, this, &MainWindow::volumeChanged);
+    connect(m_ui->dial_Reverb, &QDial::valueChanged, this, &MainWindow::reverbChanged);
+    connect(m_ui->dial_Chorus, &QDial::valueChanged, this, &MainWindow::chorusChanged);
+    connect(m_ui->openButton, &QToolButton::clicked, this, &MainWindow::openFile);
+    connect(m_ui->playButton, &QToolButton::clicked, this, &MainWindow::playSong);
+    connect(m_ui->stopButton, &QToolButton::clicked, this, &MainWindow::stopSong);
 	connect(m_synth->renderer(), SIGNAL(playbackStopped()), this, SLOT(songStopped()));
+    connect(m_synth.get(), &SynthController::underrunDetected, this, &MainWindow::underrunMessage);
+    connect(m_synth.get(), &SynthController::stallDetected, this, &MainWindow::stallMessage);
+    
     m_songFile = QString();
     updateState(EmptyState);
     initialize();
@@ -63,21 +68,21 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-    delete ui;
+    delete m_ui;
 }
 
 void
 MainWindow::initialize()
 {
-    int bufTime = ProgramSettings::instance()->bufferTime();
-    ui->bufTime->setText(QString("%1 ms").arg(bufTime));
-    int reverb = ui->combo_Reverb->findData(ProgramSettings::instance()->reverbType());
-    ui->combo_Reverb->setCurrentIndex(reverb);
-    ui->dial_Reverb->setValue(ProgramSettings::instance()->reverbWet()); //0..32765
-    int chorus = ui->combo_Chorus->findData(ProgramSettings::instance()->chorusType());
-    ui->combo_Chorus->setCurrentIndex(chorus);
-    ui->dial_Chorus->setValue(ProgramSettings::instance()->chorusLevel());
-    ui->audioOutput->setText( m_synth->audioDeviceName() );
+    m_ui->combo_Device->setCurrentText(ProgramSettings::instance()->audioDeviceName());
+    m_ui->bufTime->setValue(ProgramSettings::instance()->bufferTime());
+    int reverb = m_ui->combo_Reverb->findData(ProgramSettings::instance()->reverbType());
+    m_ui->combo_Reverb->setCurrentIndex(reverb);
+    m_ui->dial_Reverb->setValue(ProgramSettings::instance()->reverbWet()); //0..32765
+    int chorus = m_ui->combo_Chorus->findData(ProgramSettings::instance()->chorusType());
+    m_ui->combo_Chorus->setCurrentIndex(chorus);
+    m_ui->dial_Chorus->setValue(ProgramSettings::instance()->chorusLevel());
+    m_ui->volumeSlider->setValue(ProgramSettings::instance()->volumeLevel());
     m_synth->start();
 }
 
@@ -98,11 +103,11 @@ MainWindow::closeEvent(QCloseEvent* ev)
 void
 MainWindow::reverbTypeChanged(int index)
 {
-    int value = ui->combo_Reverb->itemData(index).toInt();
+    int value = m_ui->combo_Reverb->itemData(index).toInt();
     m_synth->renderer()->initReverb(value);
     ProgramSettings::instance()->setReverbType(value);
     if (value < 0) {
-        ui->dial_Reverb->setValue(0);
+        m_ui->dial_Reverb->setValue(0);
         ProgramSettings::instance()->setReverbWet(0);
     }
 }
@@ -117,11 +122,11 @@ MainWindow::reverbChanged(int value)
 void
 MainWindow::chorusTypeChanged(int index)
 {
-    int value = ui->combo_Chorus->itemData(index).toInt();
+    int value = m_ui->combo_Chorus->itemData(index).toInt();
     m_synth->renderer()->initChorus(value);
     ProgramSettings::instance()->setChorusType(value);
     if (value < 0) {
-        ui->dial_Chorus->setValue(0);
+        m_ui->dial_Chorus->setValue(0);
         ProgramSettings::instance()->setChorusLevel(0);
     }
 }
@@ -133,6 +138,27 @@ MainWindow::chorusChanged(int value)
     ProgramSettings::instance()->setChorusLevel(value);
 }
 
+void MainWindow::deviceChanged(int value)
+{
+    //qDebug() << Q_FUNC_INFO << value;
+    m_synth->setAudioDeviceName(m_ui->combo_Device->itemText(value));
+    ProgramSettings::instance()->setAudioDeviceName(m_ui->combo_Device->itemText(value));
+}
+
+void MainWindow::bufferSizeChanged(int value)
+{
+    //qDebug() << Q_FUNC_INFO << value;
+    m_synth->setBufferSize(value);
+    ProgramSettings::instance()->setBufferTime(value);
+}
+
+void MainWindow::volumeChanged(int value)
+{
+    qDebug() << Q_FUNC_INFO << value;
+    m_synth->setVolume(value);
+    ProgramSettings::instance()->setVolumeLevel(value);
+}
+
 void
 MainWindow::readFile(const QString &file)
 {
@@ -140,7 +166,7 @@ MainWindow::readFile(const QString &file)
         QFileInfo f(file);
         if (f.exists()) {
             m_songFile = f.absoluteFilePath();
-            ui->lblSong->setText(f.fileName());
+            m_ui->lblSong->setText(f.fileName());
             updateState(StoppedState);
         }
     }
@@ -165,7 +191,7 @@ MainWindow::openFile()
         tr("Open MIDI file"),  QDir::homePath(),
         tr("MIDI Files (*.mid *.midi *.kar)"));
     if (songFile.isEmpty()) {
-        ui->lblSong->setText("[empty]");
+        m_ui->lblSong->setText("[empty]");
         updateState(EmptyState);
     } else {
         readFile(songFile);
@@ -205,24 +231,44 @@ MainWindow::updateState(PlayerState newState)
     if (m_state != newState) {
         switch (newState) {
         case EmptyState:
-            ui->playButton->setEnabled(false);
-            ui->stopButton->setEnabled(false);
-            ui->openButton->setEnabled(true);
+            m_ui->playButton->setEnabled(false);
+            m_ui->stopButton->setEnabled(false);
+            m_ui->openButton->setEnabled(true);
             break;
         case PlayingState:
-            ui->playButton->setEnabled(false);
-            ui->stopButton->setEnabled(true);
-            ui->openButton->setEnabled(false);
+            m_ui->playButton->setEnabled(false);
+            m_ui->stopButton->setEnabled(true);
+            m_ui->openButton->setEnabled(false);
             break;
         case StoppedState:
-            ui->stopButton->setEnabled(true);
-            ui->playButton->setEnabled(true);
-            ui->playButton->setChecked(false);
-            ui->openButton->setEnabled(true);
+            m_ui->stopButton->setEnabled(true);
+            m_ui->playButton->setEnabled(true);
+            m_ui->playButton->setChecked(false);
+            m_ui->openButton->setEnabled(true);
             break;
         default:
             break;
         }
         m_state = newState;
     }
+}
+
+void MainWindow::underrunMessage()
+{
+    static bool showing = false;
+    if (!showing) {
+        showing = true;
+        QMessageBox::warning( this, "Underrun Error",
+                              "Audio buffer underrun errors have been detected."
+                              " Please increase the buffer time to avoid this problem.");
+        showing = false;
+    }
+}
+
+void MainWindow::stallMessage()
+{
+    QMessageBox::critical( this, "Audio Output Stalled",
+                           "Audio output is stalled right now. Sound cannot be produced."
+                           " Please increase the buffer time to avoid this problem.");
+    m_synth->stop();
 }
