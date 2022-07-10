@@ -20,41 +20,176 @@
 #include "synthcontroller.h"
 #include "synthrenderer.h"
 
-SynthController::SynthController(int bufTime, QObject *parent) : QObject(parent)
+SynthController::SynthController(int bufTime, QObject *parent)
+    : QObject(parent),
+    m_requestedBufferTime(bufTime),
+    m_running(false)
 {
-    m_renderer = new SynthRenderer(bufTime);
-    m_renderer->moveToThread(&m_renderingThread);
-    connect(&m_renderingThread, &QThread::started,  m_renderer, &SynthRenderer::run);
-    connect(&m_renderingThread, &QThread::finished, m_renderer, &QObject::deleteLater);
-    connect(m_renderer, &SynthRenderer::finished, this, &SynthController::finished);
+    qDebug() << Q_FUNC_INFO;
+    m_renderer.reset(new SynthRenderer());
+    m_format = m_renderer->format();
+    initAudioDevices();
+    initAudio();
+    connect(&m_stallDetector, &QTimer::timeout, this, [=]{
+        if (m_running) {
+            if (m_renderer->lastBufferSize() == 0) {
+                emit stallDetected();
+            }
+            m_renderer->resetLastBufferSize();
+        }
+    });
 }
 
 SynthController::~SynthController()
 {
     qDebug() << Q_FUNC_INFO;
-    if (m_renderingThread.isRunning()) {
-        stop();
-    }
 }
 
 void
 SynthController::start()
 {
     qDebug() << Q_FUNC_INFO;
-    m_renderingThread.start(QThread::HighPriority);
+    m_renderer->start();
+    auto bufferBytes = m_format.bytesForDuration(m_requestedBufferTime * 1000);
+    qDebug() << Q_FUNC_INFO
+             << "Requested buffer size:" << bufferBytes << "bytes,"
+             << m_requestedBufferTime << "milliseconds";
+    m_audioOutput->setBufferSize(bufferBytes);
+    m_audioOutput->start(m_renderer.get());
+    auto bufferTime = m_format.durationForBytes(m_audioOutput->bufferSize()) / 1000;
+    qDebug() << Q_FUNC_INFO
+             << "Applied Audio Output buffer size:" << m_audioOutput->bufferSize() << "bytes,"
+             << bufferTime << "milliseconds";
+    QTimer::singleShot(bufferTime * 2, this, [=]{
+        m_running = true;
+        m_stallDetector.start(bufferTime * 4);
+     });
 }
 
 void
 SynthController::stop()
 {
     qDebug() << Q_FUNC_INFO;
-    m_renderer->stop();
-    m_renderingThread.quit();
-    m_renderingThread.wait();
+    m_running = false;
+    m_stallDetector.stop();
+    if (!m_audioOutput.isNull()) {
+        m_audioOutput->stop();
+    }
+    if(!m_renderer.isNull()) {
+        m_renderer->stop();
+    }
 }
 
 SynthRenderer*
 SynthController::renderer() const
 {
-    return m_renderer;
+    return m_renderer.get();
+}
+
+void
+SynthController::initAudio()
+{
+    qDebug() << Q_FUNC_INFO;
+    if (!m_audioDevice.isFormatSupported(m_format)) {
+        qCritical() << Q_FUNC_INFO << "Audio format not supported" << m_format;
+        return;
+    }
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+    m_audioOutput.reset(new QAudioOutput(m_audioDevice, m_format));
+    m_audioOutput->setCategory("MIDI Synthesizer");
+    QObject::connect(m_audioOutput.data(), &QAudioOutput::stateChanged, this, [=](QAudio::State state){
+#else
+    m_audioOutput.reset(new QAudioSink(m_audioDevice, format));
+    QObject::connect(m_audioOutput.data(), &QAudioSink::stateChanged, this, [=](QAudio::State state){
+#endif
+        qDebug() << "Audio Output state:" << state << "error:" << m_audioOutput->error();
+        if (m_running && (m_audioOutput->error() == QAudio::UnderrunError)) {
+            emit underrunDetected();
+        }
+    });
+}
+
+void
+SynthController::initAudioDevices()
+{
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+    auto devices = QAudioDeviceInfo::availableDevices(QAudio::AudioOutput);
+    m_audioDevice = QAudioDeviceInfo::defaultOutputDevice();
+    foreach(auto &dev, devices) {
+        if (dev.isFormatSupported(m_format)) {
+            qDebug() << Q_FUNC_INFO << dev.deviceName();
+            m_availableDevices.insert(dev.deviceName(), dev);
+        }
+    }
+#else
+    QMediaDevices devices;
+    auto devices = devices.audioOutputs();
+    m_audioDevice = devices.defaultAudioOutput();
+    foreach(auto &dev, devices) {
+        if (dev.isFormatSupported(m_format)) {
+            qDebug() << Q_FUNC_INFO << dev.description();
+            m_availableDevices.insert(dev.description(), dev);
+        }
+    }
+#endif
+    qDebug() << Q_FUNC_INFO << audioDeviceName();
+}
+
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+const QAudioDeviceInfo&
+SynthController::audioDevice() const
+{
+    qDebug() << Q_FUNC_INFO;
+    return m_audioDevice;
+}
+
+void
+SynthController::setAudioDevice(const QAudioDeviceInfo &newAudioDevice)
+{
+    qDebug() << Q_FUNC_INFO;
+    m_audioDevice = newAudioDevice;
+}
+#else
+const QAudioDevice&
+SynthController::audioDevice() const
+{
+    qDebug() << Q_FUNC_INFO;
+    return m_audioDevice;
+}
+
+void
+SynthController::setAudioDevice(const QAudioDevice &newAudioDevice)
+{
+    qDebug() << Q_FUNC_INFO;
+    m_audioDevice = newAudioDevice;
+}
+#endif
+
+QStringList
+SynthController::availableAudioDevices() const
+{
+    qDebug() << Q_FUNC_INFO;
+    return m_availableDevices.keys();
+}
+
+QString
+SynthController::audioDeviceName() const
+{
+    qDebug() << Q_FUNC_INFO;
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+    return m_audioDevice.deviceName();
+#else
+    return m_audioDevice.description();
+#endif
+}
+
+void
+SynthController::setAudioDeviceName(const QString newName)
+{
+    qDebug() << Q_FUNC_INFO << newName;
+    if (m_availableDevices.contains(newName) &&
+        (m_audioDevice.isNull() || (audioDeviceName() != newName) )) {
+        stop();
+        m_audioDevice = m_availableDevices.value(newName);
+    }
 }

@@ -16,7 +16,27 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <QDebug>
 #include "programsettings.h"
+
+const QString ProgramSettings::DEFAULT_MIDI_DRIVER =
+#if defined(Q_OS_LINUX)
+    QLatin1String("ALSA");
+#elif defined(Q_OS_WINDOWS)
+    QLatin1String("Windows MM");
+#elif defined(Q_OS_MACOS)
+    QLatin1String("CoreMIDI");
+#elif defined(Q_OS_UNIX)
+    QLatin1String("OSS");
+#else
+    QLatin1String("Network");
+#endif
+const QString ProgramSettings::DEFAULT_AUDIO_DEVICE = QLatin1String("default");
+const int ProgramSettings::DEFAULT_BUFFER_TIME = 100;
+const int ProgramSettings::DEFAULT_REVERB_TYPE = 1;
+const int ProgramSettings::DEFAULT_REVERB_WET = 25800;
+const int ProgramSettings::DEFAULT_CHORUS_TYPE = -1;
+const int ProgramSettings::DEFAULT_CHORUS_LEVEL = 0;
 
 ProgramSettings::ProgramSettings(QObject *parent) : QObject(parent)
 {
@@ -31,11 +51,12 @@ ProgramSettings* ProgramSettings::instance()
 
 void ProgramSettings::ResetDefaults()
 {
-    m_bufferTime = 60;
-    m_reverbType = 1;
-    m_reverbWet = 25800;
-    m_chorusType = -1;
-    m_chorusLevel = 0;
+    qDebug() << Q_FUNC_INFO;
+    m_bufferTime = DEFAULT_BUFFER_TIME;
+    m_reverbType = DEFAULT_REVERB_TYPE;
+    m_reverbWet = DEFAULT_REVERB_WET;
+    m_chorusType = DEFAULT_CHORUS_TYPE;
+    m_chorusLevel = DEFAULT_CHORUS_LEVEL;
     emit ValuesChanged();
 }
 
@@ -67,31 +88,21 @@ void ProgramSettings::SaveToFile(const QString& filepath)
 
 void ProgramSettings::internalRead(QSettings &settings)
 {
-    const QString DEFAULT_DRIVER = 
-#if defined(Q_OS_LINUX)
-        QStringLiteral("ALSA");
-#elif defined(Q_OS_WINDOWS)
-        QStringLiteral("Windows MM");
-#elif defined(Q_OS_MACOS)
-        QStringLiteral("CoreMIDI");
-#elif defined(Q_OS_UNIX)
-        QStringLiteral("OSS");
-#else
-        QStringLiteral("Network");
-#endif
-    m_midiDriver = settings.value("MIDIDriver", DEFAULT_DRIVER).toString();
-    m_portName = settings.value("PortName", QLatin1String()).toString();
-    m_bufferTime = settings.value("BufferTime", 60).toInt();
-    m_reverbType = settings.value("ReverbType", 1).toInt();
-    m_reverbWet = settings.value("ReverbWet", 25800).toInt();
-    m_chorusType = settings.value("ChorusType", -1).toInt();
-    m_chorusLevel = settings.value("ChorusLevel", 0).toInt();
-    m_audioDeviceName = settings.value("AudioDevice", "default").toString();
+    qDebug() << Q_FUNC_INFO;
+    m_midiDriver = settings.value("MIDIDriver", DEFAULT_MIDI_DRIVER).toString();
+    m_portName = settings.value("PortName", QString()).toString();
+    m_bufferTime = settings.value("BufferTime", DEFAULT_BUFFER_TIME).toInt();
+    m_reverbType = settings.value("ReverbType", DEFAULT_REVERB_TYPE).toInt();
+    m_reverbWet = settings.value("ReverbWet", DEFAULT_REVERB_WET).toInt();
+    m_chorusType = settings.value("ChorusType", DEFAULT_CHORUS_TYPE).toInt();
+    m_chorusLevel = settings.value("ChorusLevel", DEFAULT_CHORUS_LEVEL).toInt();
+    m_audioDeviceName = settings.value("AudioDevice", DEFAULT_AUDIO_DEVICE).toString();
     emit ValuesChanged();
 }
 
 void ProgramSettings::internalSave(QSettings &settings)
 {
+    qDebug() << Q_FUNC_INFO;
     settings.setValue("MIDIDriver", m_midiDriver);
     settings.setValue("PortName", m_portName);
     settings.setValue("BufferTime", m_bufferTime);

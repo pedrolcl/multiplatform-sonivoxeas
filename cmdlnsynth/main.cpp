@@ -1,4 +1,4 @@
-/*
+﻿/*
     Sonivox EAS Synthesizer for Qt applications
     Copyright (C) 2016-2022, Pedro Lopez-Cabanillas <plcl@users.sf.net>
 
@@ -16,10 +16,13 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <signal.h>
+#include <csignal>
 #include <QDebug>
 #include <QCoreApplication>
 #include <QCommandLineParser>
+#include <QScopedPointer>
+#include <QFileInfo>
+
 #include <eas_reverb.h>
 #include "synthcontroller.h"
 #include "programsettings.h"
@@ -28,7 +31,7 @@
     #define endl Qt::endl
 #endif
 
-static SynthController* synth = 0;
+QScopedPointer<SynthController> synth;
 
 void signalHandler(int sig)
 {
@@ -36,8 +39,8 @@ void signalHandler(int sig)
         qDebug() << "SIGINT received. Exiting" << endl;
     else if (sig == SIGTERM)
         qDebug() << "SIGTERM received. Exiting" << endl;
-    if (synth != 0)
-        synth->stop();
+    synth->stop();
+    qApp->quit();
 }
 
 int main(int argc, char *argv[])
@@ -139,7 +142,7 @@ int main(int argc, char *argv[])
             parser.showHelp(1);
         }
     }
-    synth = new SynthController(ProgramSettings::instance()->bufferTime());
+    synth.reset(new SynthController(ProgramSettings::instance()->bufferTime()));
     synth->renderer()->setMidiDriver(ProgramSettings::instance()->midiDriver());
     if (parser.isSet(listOption)) {
         auto avail = synth->renderer()->connections();
@@ -150,7 +153,7 @@ int main(int argc, char *argv[])
                 fputs("\n", stdout);
             }
         }
-        auto audioavail = synth->renderer()->availableAudioDevices();
+        auto audioavail = synth->availableAudioDevices();
         fputs("Available Audio Devices:\n", stdout);
         foreach(const auto &p, audioavail) {
             if (!p.isEmpty()) {
@@ -161,23 +164,28 @@ int main(int argc, char *argv[])
         return EXIT_SUCCESS;
     }
     synth->renderer()->subscribe(ProgramSettings::instance()->portName());
-    synth->renderer()->setAudioDeviceName(ProgramSettings::instance()->audioDeviceName());
     synth->renderer()->setReverbWet(ProgramSettings::instance()->reverbWet());
     synth->renderer()->initReverb(ProgramSettings::instance()->reverbType());
     synth->renderer()->setChorusLevel(ProgramSettings::instance()->chorusLevel());
     synth->renderer()->initChorus(ProgramSettings::instance()->chorusType());
-    QObject::connect(&app, &QCoreApplication::aboutToQuit, synth, &QObject::deleteLater);
+    synth->setAudioDeviceName(ProgramSettings::instance()->audioDeviceName());
+    QObject::connect(synth.get(), &SynthController::underrunDetected, &app, []{
+        fputs("Underrun error detected. Please increase the audio buffer size.\n", stderr);
+    });
+    QObject::connect(synth.get(), &SynthController::stallDetected, &app, []{
+        fputs("Audio stall error detected. Please increase the audio buffer size.\n", stderr);
+        synth->stop();
+        qApp->quit();
+    });
     QObject::connect(&app, &QCoreApplication::aboutToQuit, ProgramSettings::instance(), &ProgramSettings::SaveToNativeStorage);
-//  QObject::connect(synth->renderer(), &SynthRenderer::playbackStopped, &app, &QCoreApplication::quit);
-//  QObject::connect(synth->renderer(), &SynthRenderer::finished, &app, &QCoreApplication::quit);
+    QObject::connect(synth->renderer(), SIGNAL(playbackStopped()), synth.get(), SLOT(stop()));
 	QObject::connect(synth->renderer(), SIGNAL(playbackStopped()), &app, SLOT(quit()));
-	QObject::connect(synth->renderer(), SIGNAL(finished()), &app, SLOT(quit()));
     QStringList args = parser.positionalArguments();
     if (!args.isEmpty()) {
         for(int i = 0; i < args.length();  ++i) {
-            QFile argFile(args[i]);
+            QFileInfo argFile(args[i]);
             if (argFile.exists()) {
-                synth->renderer()->playFile(argFile.fileName());
+                synth->renderer()->playFile(argFile.filePath());
             }
         }
     }

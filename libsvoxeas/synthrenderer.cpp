@@ -20,55 +20,46 @@
 #include <QString>
 #include <QCoreApplication>
 #include <QTextStream>
-#include <QtDebug>
-#include <QReadLocker>
-#include <QWriteLocker>
+#include <QDebug>
+
 #include <eas_reverb.h>
 #include <eas_chorus.h>
 #include <drumstick/sequencererror.h>
+
+#include "programsettings.h"
 #include "synthrenderer.h"
 #include "filewrapper.h"
 
 using namespace drumstick::rt;
 
-SynthRenderer::SynthRenderer(int bufTime, QObject *parent) : QObject(parent),
-    m_Stopped(true),
+SynthRenderer::SynthRenderer(QObject *parent):
+    QIODevice(parent),
     m_isPlaying(false),
     m_input(nullptr),
-	m_requestedBufferTime(bufTime)
+    m_currentFile(nullptr),
+    m_lastBufferSize(0)
 {
+    qDebug() << Q_FUNC_INFO;
     initMIDI();
     initEAS();
-    initAudioDevices();
 }
 
 void
 SynthRenderer::initMIDI()
 {
-    const QString DEFAULT_DRIVER = 
-#if defined(Q_OS_LINUX)
-        QStringLiteral("ALSA");
-#elif defined(Q_OS_WINDOWS)
-        QStringLiteral("Windows MM");
-#elif defined(Q_OS_MACOS)
-        QStringLiteral("CoreMIDI");
-#elif defined(Q_OS_UNIX)
-        QStringLiteral("OSS");
-#else
-        QStringLiteral("Network");
-#endif
-    qDebug() << Q_FUNC_INFO << DEFAULT_DRIVER;
+    qDebug() << Q_FUNC_INFO << ProgramSettings::DEFAULT_MIDI_DRIVER;
     if (m_midiDriver.isEmpty()) {
-        setMidiDriver(DEFAULT_DRIVER);
+        setMidiDriver(ProgramSettings::DEFAULT_MIDI_DRIVER);
     }
     if (m_input == nullptr) {
-        qWarning() << "Input Backend is Missing. You may need to set the DRUMSTICKRT environment variable";
+        qWarning() << Q_FUNC_INFO << "Input Backend is Missing. You may need to set the DRUMSTICKRT environment variable";    
     }
 }
 
 void
 SynthRenderer::initEAS()
 {
+    qDebug() << Q_FUNC_INFO;
     /* SONiVOX EAS initialization */
     EAS_RESULT eas_res;
     EAS_DATA_HANDLE dataHandle;
@@ -76,19 +67,19 @@ SynthRenderer::initEAS()
 
     const S_EAS_LIB_CONFIG *easConfig = EAS_Config();
     if (easConfig == 0) {
-        qCritical() << "EAS_Config returned null";
+        qCritical() << Q_FUNC_INFO << "EAS_Config returned null";
         return;
     }
 
     eas_res = EAS_Init(&dataHandle);
     if (eas_res != EAS_SUCCESS) {
-      qCritical() << "EAS_Init error: " << eas_res;
+      qCritical() << Q_FUNC_INFO << "EAS_Init error: " << eas_res;
       return;
     }
 
     eas_res = EAS_OpenMIDIStream(dataHandle, &handle, NULL);
     if (eas_res != EAS_SUCCESS) {
-      qCritical() << "EAS_OpenMIDIStream error: " << eas_res;
+      qCritical() << Q_FUNC_INFO << "EAS_OpenMIDIStream error: " << eas_res;
       EAS_Shutdown(dataHandle);
       return;
     }
@@ -97,101 +88,130 @@ SynthRenderer::initEAS()
     m_streamHandle = handle;
     assert(m_streamHandle != 0);
     m_sampleRate = easConfig->sampleRate;
-    m_bufferSize = easConfig->mixBufferSize;
+    m_renderFrames = easConfig->mixBufferSize;
     m_channels = easConfig->numChannels;
     m_sample_size = CHAR_BIT * sizeof (EAS_PCM);
-    qDebug() << Q_FUNC_INFO << "EAS bufferSize=" << m_bufferSize << " sampleRate=" << m_sampleRate << " channels=" << m_channels;
-}
+    qDebug() << Q_FUNC_INFO << "EAS renderFrames=" << m_renderFrames << " sampleRate=" << m_sampleRate << " channels=" << m_channels;
 
-void
-SynthRenderer::initAudio()
-{
-    QAudioFormat format;
-    format.setSampleRate(m_sampleRate);
-    format.setChannelCount(m_channels);
+    //QAudioFormat initialization;
+    m_format.setSampleRate(m_sampleRate);
+    m_format.setChannelCount(m_channels);
 #if QT_VERSION < QT_VERSION_CHECK(6,0,0)
-    format.setSampleSize(m_sample_size);
-    format.setCodec("audio/pcm");
-    format.setSampleType(QAudioFormat::SignedInt);
+    m_format.setSampleSize(m_sample_size);
+    m_format.setCodec("audio/pcm");
+    m_format.setSampleType(QAudioFormat::SignedInt);
 #else
-    format.setSampleFormat(QAudioFormat::Int16);
+    m_format.setSampleFormat(QAudioFormat::Int16);
 #endif
-
-    if (!m_audioDevice.isFormatSupported(format)) {
-        qCritical() << "Audio format not supported" << format;
-        return;
-    }
-
-    qint64 requested_size = m_channels * (m_sample_size / CHAR_BIT) * m_requestedBufferTime * m_sampleRate / 1000;
-    qint64 period_bytes = m_channels * (m_sample_size / CHAR_BIT) * m_bufferSize;
-    qDebug() << Q_FUNC_INFO << "requested buffer sizes:" << period_bytes << requested_size;
-
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
-    m_audioOutput.reset(new QAudioOutput(m_audioDevice, format));
-    m_audioOutput->setCategory("MIDI Synthesizer");
-    QObject::connect(m_audioOutput.data(), &QAudioOutput::stateChanged, this, [](QAudio::State state){
-#else
-    m_audioOutput.reset(new QAudioSink(m_audioDevice, format));
-    QObject::connect(m_audioOutput.data(), &QAudioSink::stateChanged, this, [](QAudio::State state){
-#endif
-        qDebug() << "Audio Output state changed:" << state;
-    });
-    m_audioOutput->setBufferSize( qMax(period_bytes, requested_size) );
-}
-
-void SynthRenderer::initAudioDevices()
-{
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
-    m_availableDevices = QAudioDeviceInfo::availableDevices(QAudio::AudioOutput);
-    m_audioDevice = QAudioDeviceInfo::defaultOutputDevice();
-#else
-    QMediaDevices devices;
-    m_availableDevices = devices.audioOutputs();
-    m_audioDevice = devices.defaultAudioOutput();
-#endif
-    /*foreach(auto &dev, m_availableDevices) {
-        qDebug() << Q_FUNC_INFO << dev.deviceName();
-    }*/
 }
 
 SynthRenderer::~SynthRenderer()
 {
     if (m_input != nullptr) {
+        m_input->disconnect();
         m_input->close();
     }
-
     EAS_RESULT eas_res;
     if (m_easData != 0 && m_streamHandle != 0) {
       eas_res = EAS_CloseMIDIStream(m_easData, m_streamHandle);
       if (eas_res != EAS_SUCCESS) {
-          qWarning() << "EAS_CloseMIDIStream error: " << eas_res;
+          qWarning() << Q_FUNC_INFO << "EAS_CloseMIDIStream error: " << eas_res;
       }
       eas_res = EAS_Shutdown(m_easData);
       if (eas_res != EAS_SUCCESS) {
-          qWarning() << "EAS_Shutdown error: " << eas_res;
+          qWarning() << Q_FUNC_INFO << "EAS_Shutdown error: " << eas_res;
       }
     }
     qDebug() << Q_FUNC_INFO;
+}
+
+qint64 SynthRenderer::readData(char *data, qint64 maxlen)
+{
+    EAS_RESULT eas_res;
+    EAS_I32 numGen = 0;
+
+    //qDebug() << Q_FUNC_INFO << "starting with maxlen:" << maxlen;
+    const qint64 bufferBytes = m_renderFrames * sizeof(EAS_PCM) * m_channels;
+	Q_ASSERT(bufferBytes > 0 && bufferBytes <= maxlen);
+    //qint64 length = (maxlen / bufferBytes) * bufferBytes;
+    qint64 buflen = bufferBytes;
+
+    if (m_isPlaying) {
+        int t = getPlaybackLocation();
+        emit playbackTime(t);
+    }
+
+    EAS_PCM *buffer = reinterpret_cast<EAS_PCM *>(data);
+    eas_res = EAS_Render(m_easData, buffer, m_renderFrames, &numGen);
+    if (eas_res != EAS_SUCCESS) {
+        qWarning() << Q_FUNC_INFO << "EAS_Render() error:" << eas_res;
+    }
+
+    if (m_isPlaying && isPlaybackCompleted()) {
+        closePlayback();
+        if (m_files.isEmpty()) {
+            m_isPlaying = false;
+            emit playbackStopped();
+        } else {
+            preparePlayback();
+        }
+    }
+
+    m_lastBufferSize = buflen;
+    //qDebug() << Q_FUNC_INFO << "before returning" << buflen;
+    return buflen;
+}
+
+qint64 SynthRenderer::writeData(const char *data, qint64 len)
+{
+    Q_UNUSED(data);
+    Q_UNUSED(len);
+    qDebug() << Q_FUNC_INFO;
+	return 0;
+}
+
+qint64 SynthRenderer::size() const
+{
+    qDebug() << Q_FUNC_INFO;
+    return std::numeric_limits<qint64>::max();
+}
+
+qint64 SynthRenderer::bytesAvailable() const
+{
+    qDebug() << Q_FUNC_INFO;
+    return std::numeric_limits<qint64>::max();
 }
 
 bool
 SynthRenderer::stopped()
 {
-	QReadLocker locker(&m_mutex);
-    return m_Stopped;
+    qDebug() << Q_FUNC_INFO;
+    return !isOpen();
+}
+
+void
+SynthRenderer::start()
+{
+    m_isPlaying = false;
+    open(QIODevice::ReadOnly | QIODevice::Unbuffered);
+    if (m_files.length() > 0) {
+        preparePlayback();
+    }
 }
 
 void
 SynthRenderer::stop()
 {
-	QWriteLocker locker(&m_mutex);
     qDebug() << Q_FUNC_INFO;
-    m_Stopped = true;
+    if (isOpen()) {
+        close();
+    }
 }
 
 QStringList 
 SynthRenderer::connections() const
 {
+    qDebug() << Q_FUNC_INFO;
     Q_ASSERT(m_input != nullptr);
     QStringList result;
     auto avail = m_input->connections(true);
@@ -204,6 +224,7 @@ SynthRenderer::connections() const
 QString 
 SynthRenderer::subscription() const
 {
+    qDebug() << Q_FUNC_INFO << m_portName;
     return m_portName;
 }
 
@@ -226,7 +247,7 @@ SynthRenderer::subscribe(const QString& portName)
     }
 }
 
-void
+/*void
 SynthRenderer::run()
 {
     QByteArray audioData;
@@ -235,22 +256,15 @@ SynthRenderer::run()
     try {
         if (m_input != nullptr) {
             m_input->disconnect();
-            QObject::connect(m_input, &MIDIInput::midiNoteOn, this, &SynthRenderer::noteOn);
-            QObject::connect(m_input, &MIDIInput::midiNoteOff, this, &SynthRenderer::noteOff);
-            QObject::connect(m_input, &MIDIInput::midiKeyPressure, this, &SynthRenderer::keyPressure);
-            QObject::connect(m_input, &MIDIInput::midiController, this, &SynthRenderer::controller);
-            QObject::connect(m_input, &MIDIInput::midiProgram, this, &SynthRenderer::program);
-            QObject::connect(m_input, &MIDIInput::midiChannelPressure, this, &SynthRenderer::channelPressure);
-            QObject::connect(m_input, &MIDIInput::midiPitchBend, this, &SynthRenderer::pitchBend);
         }
         m_Stopped = false;
         m_isPlaying = false;
         if (m_files.length() > 0) {
             preparePlayback();
         }
-        QIODevice *iodevice = m_audioOutput->start();
-        qDebug() << "Audio Output started with buffer size =" << m_audioOutput->bufferSize() << "bytesfree= " << m_audioOutput->bytesFree();
-        audioData.reserve(m_audioOutput->bufferSize());
+//        QIODevice *iodevice = m_audioOutput->start();
+//        qDebug() << "Audio Output started with buffer size =" << m_audioOutput->bufferSize() << "bytesfree= " << m_audioOutput->bytesFree();
+//        audioData.reserve(m_audioOutput->bufferSize());
         while (!stopped()) {
             EAS_RESULT eas_res;
             EAS_I32 numGen = 0;
@@ -269,9 +283,9 @@ SynthRenderer::run()
                 // synth audio rendering
                 int maxlen = m_audioOutput->bufferSize();
                 while(audioData.size() < maxlen) {
-                    char data[m_bufferSize * sizeof (EAS_PCM) * m_channels];
+                    char data[m_renderFrames * sizeof (EAS_PCM) * m_channels];
                     EAS_PCM *buffer = (EAS_PCM *) data;
-                    eas_res = EAS_Render(m_easData, buffer, m_bufferSize, &numGen);
+                    eas_res = EAS_Render(m_easData, buffer, m_renderFrames, &numGen);
                     if (eas_res != EAS_SUCCESS) {
                         qWarning() << Q_FUNC_INFO << "EAS_Render error:" << eas_res;
                         break;
@@ -281,14 +295,14 @@ SynthRenderer::run()
                     }
                 }
                 // hand over to audiooutput, pushing the rendered buffer
-                maxlen = qMin(maxlen, m_audioOutput->bytesFree());
-                int written = iodevice->write(audioData, maxlen);
-                if (written < 0 || m_audioOutput->error() != QAudio::NoError) {
-                    qWarning() << Q_FUNC_INFO << "write audio error:" << m_audioOutput->error();
-                    break;
-                } else if (written > 0) {
-                    audioData.remove(0, written);
-                }
+//                maxlen = qMin(maxlen, m_audioOutput->bytesFree());
+//                int written = iodevice->write(audioData, maxlen);
+//                if (written < 0 || m_audioOutput->error() != QAudio::NoError) {
+//                    qWarning() << Q_FUNC_INFO << "write audio error:" << m_audioOutput->error();
+//                    break;
+//                } else if (written > 0) {
+//                    audioData.remove(0, written);
+//                }
             }
             if (m_isPlaying && playbackCompleted()) {
                 closePlayback();
@@ -310,100 +324,53 @@ SynthRenderer::run()
     }
     qDebug() << Q_FUNC_INFO << "ended";
     emit finished();
-}
+}*/
 
 const QString SynthRenderer::midiDriver() const
 {
+    qDebug() << Q_FUNC_INFO << m_midiDriver;
     return m_midiDriver;
 }
 
 void SynthRenderer::setMidiDriver(const QString newMidiDriver)
 {
     if (m_midiDriver != newMidiDriver) {
+        qDebug() << Q_FUNC_INFO << newMidiDriver;
         m_midiDriver = newMidiDriver;
         if (m_input != nullptr) {
+            m_input->disconnect();
             m_input->close();
         }
         m_input = m_man.inputBackendByName(m_midiDriver);
-    }
-}
-
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
-const QAudioDeviceInfo &SynthRenderer::audioDevice() const
-{
-    return m_audioDevice;
-}
-
-void SynthRenderer::setAudioDevice(const QAudioDeviceInfo &newAudioDevice)
-{
-    m_audioDevice = newAudioDevice;
-}
-#else
-const QAudioDevice &SynthRenderer::audioDevice() const
-{
-    return m_audioDevice;
-}
-
-void SynthRenderer::setAudioDevice(const QAudioDevice &newAudioDevice)
-{
-    m_audioDevice = newAudioDevice;
-}
-#endif
-
-
-QStringList SynthRenderer::availableAudioDevices() const
-{
-    QStringList result;
-    foreach(const auto &device, m_availableDevices) {
-    #if QT_VERSION < QT_VERSION_CHECK(6,0,0)
-        result << device.deviceName();
-    #else
-        result << device.description();
-    #endif
-    }
-    return result;
-}
-
-QString SynthRenderer::audioDeviceName() const
-{
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
-    return m_audioDevice.deviceName();
-#else
-    return m_audioDevice.description();
-#endif
-}
-
-void SynthRenderer::setAudioDeviceName(const QString newName)
-{
-    foreach(auto device, m_availableDevices) {
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
-        if (device.deviceName() == newName) {
-#else
-        if (device.description() == newName) {
-#endif
-            m_audioDevice = device;
-            break;
+        if (m_input != nullptr) {
+            QObject::connect(m_input, &MIDIInput::midiNoteOn, this, &SynthRenderer::noteOn);
+            QObject::connect(m_input, &MIDIInput::midiNoteOff, this, &SynthRenderer::noteOff);
+            QObject::connect(m_input, &MIDIInput::midiKeyPressure, this, &SynthRenderer::keyPressure);
+            QObject::connect(m_input, &MIDIInput::midiController, this, &SynthRenderer::controller);
+            QObject::connect(m_input, &MIDIInput::midiProgram, this, &SynthRenderer::program);
+            QObject::connect(m_input, &MIDIInput::midiChannelPressure, this, &SynthRenderer::channelPressure);
+            QObject::connect(m_input, &MIDIInput::midiPitchBend, this, &SynthRenderer::pitchBend);
         }
     }
 }
 
 void SynthRenderer::noteOn(int chan, int note, int vel) 
 {
+    qDebug() << Q_FUNC_INFO << chan << note << vel;
     QByteArray ev(3, 0);
     ev[0] = MIDI_STATUS_NOTEON | chan;
     ev[1] = 0xff & note;
     ev[2] = 0xff & vel;
-    //qDebug() << Q_FUNC_INFO << ev;
     writeMIDIData(ev);
 }
 
 void SynthRenderer::noteOff(int chan, int note, int vel) 
 {
+    qDebug() << Q_FUNC_INFO << chan << note << vel;
     QByteArray ev(3, 0);
     ev[0] = MIDI_STATUS_NOTEOFF | chan;
     ev[1] = 0xff & note;
     ev[2] = 0xff & vel;
-    //qDebug() << Q_FUNC_INFO << ev;
     writeMIDIData(ev);
 }
 
@@ -443,13 +410,29 @@ void SynthRenderer::channelPressure(const int chan, const int value)
 
 void SynthRenderer::pitchBend(const int chan, const int v) 
 {
+    qDebug() << Q_FUNC_INFO << chan << v;;
     QByteArray ev(3, 0);
     int value = 8192 + v;
     ev[0] = MIDI_STATUS_PITCHBEND | chan;
     ev[1] = MIDI_LSB(value);
     ev[2] = MIDI_MSB(value);
-    //qDebug() << Q_FUNC_INFO << chan << v << ev;;
     writeMIDIData(ev);
+}
+
+qint64 SynthRenderer::lastBufferSize() const
+{
+    return m_lastBufferSize;
+}
+
+void SynthRenderer::resetLastBufferSize()
+{
+    m_lastBufferSize = 0;
+}
+
+const QAudioFormat&
+SynthRenderer::format() const
+{
+    return m_format;
 }
 
 void
@@ -475,6 +458,7 @@ SynthRenderer::writeMIDIData(QByteArray &ev)
 void
 SynthRenderer::initReverb(int reverb_type)
 {
+    qDebug() << Q_FUNC_INFO;
     EAS_RESULT eas_res;
     EAS_BOOL sw = EAS_TRUE;
     if ( reverb_type >= EAS_PARAM_REVERB_LARGE_HALL && reverb_type <= EAS_PARAM_REVERB_ROOM ) {
@@ -493,6 +477,7 @@ SynthRenderer::initReverb(int reverb_type)
 void
 SynthRenderer::initChorus(int chorus_type)
 {
+    qDebug() << Q_FUNC_INFO;
     EAS_RESULT eas_res;
     EAS_BOOL sw = EAS_TRUE;
     if (chorus_type >= EAS_PARAM_CHORUS_PRESET1 && chorus_type <= EAS_PARAM_CHORUS_PRESET4 ) {
@@ -511,6 +496,7 @@ SynthRenderer::initChorus(int chorus_type)
 void
 SynthRenderer::setReverbWet(int amount)
 {
+    qDebug() << Q_FUNC_INFO;
     EAS_RESULT eas_res = EAS_SetParameter(m_easData, EAS_MODULE_REVERB, EAS_PARAM_REVERB_WET, (EAS_I32) amount);
     if (eas_res != EAS_SUCCESS) {
         qWarning() << "EAS_SetParameter error:" << eas_res;
@@ -520,6 +506,7 @@ SynthRenderer::setReverbWet(int amount)
 void
 SynthRenderer::setChorusLevel(int amount)
 {
+    qDebug() << Q_FUNC_INFO;
     EAS_RESULT eas_res = EAS_SetParameter(m_easData, EAS_MODULE_CHORUS, EAS_PARAM_CHORUS_LEVEL, (EAS_I32) amount);
     if (eas_res != EAS_SUCCESS) {
         qWarning() << "EAS_SetParameter error:" << eas_res;
@@ -539,42 +526,39 @@ SynthRenderer::preparePlayback()
     EAS_HANDLE handle;
     EAS_RESULT result;
     EAS_I32 playTime;
-
-    m_currentFile = new FileWrapper(m_files.first());
-    m_files.removeFirst();
-
-    /* call EAS library to open file */
-    if ((result = EAS_OpenFile(m_easData, m_currentFile->getLocator(), &handle)) != EAS_SUCCESS)
+    if (!m_files.isEmpty()) 
     {
-        qWarning() << "EAS_OpenFile" << result;
-        return;
+        m_currentFile = new FileWrapper(m_files.first());
+        m_files.removeFirst();
+        /* call EAS library to open file */
+        if ((result = EAS_OpenFile(m_easData, m_currentFile->getLocator(), &handle)) != EAS_SUCCESS)
+        {
+            qWarning() << Q_FUNC_INFO << "EAS_OpenFile" << result;
+            return;
+        }
+        /* prepare to play the file */
+        if ((result = EAS_Prepare(m_easData, handle)) != EAS_SUCCESS)
+        {
+            qWarning() << Q_FUNC_INFO << "EAS_Prepare" << result;
+            return;
+        }
+        /* get play length */
+        if ((result = EAS_ParseMetaData(m_easData, handle, &playTime)) != EAS_SUCCESS)
+        {
+            qWarning() << Q_FUNC_INFO << "EAS_ParseMetaData. result=" << result;
+            return;
+        }
+        else
+        {
+            qDebug() << Q_FUNC_INFO << "EAS_ParseMetaData. playTime=" << playTime;
+        }
+        m_fileHandle = handle;
+        m_isPlaying = true;
     }
-
-    /* prepare to play the file */
-    if ((result = EAS_Prepare(m_easData, handle)) != EAS_SUCCESS)
-    {
-        qWarning() << "EAS_Prepare" << result;
-        return;
-    }
-
-    /* get play length */
-    if ((result = EAS_ParseMetaData(m_easData, handle, &playTime)) != EAS_SUCCESS)
-    {
-        qWarning() << "EAS_ParseMetaData. result=" << result;
-        return;
-    }
-    else
-    {
-        qDebug() << "EAS_ParseMetaData. playTime=" << playTime;
-    }
-
-    qDebug() << Q_FUNC_INFO;
-    m_fileHandle = handle;
-    m_isPlaying = true;
 }
 
 bool
-SynthRenderer::playbackCompleted()
+SynthRenderer::isPlaybackCompleted()
 {
     EAS_RESULT result;
     EAS_STATE state = EAS_STATE_EMPTY;
@@ -582,9 +566,10 @@ SynthRenderer::playbackCompleted()
     {
         qWarning() << "EAS_State:" << result;
     }
-    //qDebug() << Q_FUNC_INFO << state;
     /* is playback complete */
-    return ((state == EAS_STATE_STOPPED) || (state == EAS_STATE_ERROR) || (state == EAS_STATE_EMPTY));
+    bool b = ((state == EAS_STATE_STOPPED) || (state == EAS_STATE_ERROR) || (state == EAS_STATE_EMPTY));
+    //qDebug() << Q_FUNC_INFO << b << "state:" << state;
+    return b;
 }
 
 void
@@ -595,11 +580,11 @@ SynthRenderer::closePlayback()
     /* close the input file */
     if (m_fileHandle != 0 && (result = EAS_CloseFile(m_easData, m_fileHandle)) != EAS_SUCCESS)
     {
-        qWarning() << "EAS_CloseFile" << result;
+        qWarning() << Q_FUNC_INFO << "EAS_CloseFile" << result;
     }
-    m_fileHandle = 0;
+    m_fileHandle = nullptr;
     delete m_currentFile;
-    m_currentFile = 0;
+    m_currentFile = nullptr;
     m_isPlaying = false;
 }
 
@@ -611,7 +596,7 @@ SynthRenderer::getPlaybackLocation()
     /* get the current time */
     if ((result = EAS_GetLocation(m_easData, m_fileHandle, &playTime)) != EAS_SUCCESS)
     {
-        qWarning() << "EAS_GetLocation" << result;
+        qWarning() << Q_FUNC_INFO << "EAS_GetLocation" << result;
     }
     //qDebug() << Q_FUNC_INFO << playTime;
     return playTime;
@@ -620,6 +605,7 @@ SynthRenderer::getPlaybackLocation()
 void
 SynthRenderer::startPlayback(const QString fileName)
 {
+    qDebug() << Q_FUNC_INFO;
     if (!stopped())
     {
         playFile(fileName);
@@ -630,6 +616,7 @@ SynthRenderer::startPlayback(const QString fileName)
 void
 SynthRenderer::stopPlayback()
 {
+    qDebug() << Q_FUNC_INFO;
     if (!stopped()) {
         closePlayback();
     }

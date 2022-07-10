@@ -30,7 +30,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_synth = new SynthController(ProgramSettings::instance()->bufferTime(), this);
     m_synth->renderer()->setMidiDriver(ProgramSettings::instance()->midiDriver());
     m_synth->renderer()->subscribe(ProgramSettings::instance()->portName());
-    m_synth->renderer()->setAudioDeviceName(ProgramSettings::instance()->audioDeviceName());
+    //m_synth->renderer()->setAudioDeviceName(ProgramSettings::instance()->audioDeviceName());
 
     ui->setupUi(this);
     ui->combo_Reverb->addItem(QStringLiteral("Large Hall"), 0);
@@ -77,7 +77,7 @@ MainWindow::initialize()
     int chorus = ui->combo_Chorus->findData(ProgramSettings::instance()->chorusType());
     ui->combo_Chorus->setCurrentIndex(chorus);
     ui->dial_Chorus->setValue(ProgramSettings::instance()->chorusLevel());
-    ui->audioOutput->setText( m_synth->renderer()->audioDeviceName() );
+    ui->audioOutput->setText( m_synth->audioDeviceName() );
     m_synth->start();
 }
 
@@ -138,9 +138,11 @@ MainWindow::readFile(const QString &file)
 {
     if (!file.isEmpty() && file != m_songFile) {
         QFileInfo f(file);
-        m_songFile = f.absoluteFilePath();
-        ui->lblSong->setText(f.fileName());
-        updateState(StoppedState);
+        if (f.exists()) {
+            m_songFile = f.absoluteFilePath();
+            ui->lblSong->setText(f.fileName());
+            updateState(StoppedState);
+        }
     }
 }
 

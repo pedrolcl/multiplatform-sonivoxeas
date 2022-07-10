@@ -54,6 +54,14 @@ public:
     const QString &portName() const;
     void setPortName(const QString &newPortName);
     
+    static const QString DEFAULT_MIDI_DRIVER;
+    static const QString DEFAULT_AUDIO_DEVICE;
+    static const int DEFAULT_BUFFER_TIME;
+    static const int DEFAULT_REVERB_TYPE;
+    static const int DEFAULT_REVERB_WET;
+    static const int DEFAULT_CHORUS_TYPE;
+    static const int DEFAULT_CHORUS_LEVEL;
+
 signals:
     void ValuesChanged();
 

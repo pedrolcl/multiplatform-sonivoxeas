@@ -20,69 +20,53 @@
 #define SYNTHRENDERER_H_
 
 #include <QObject>
-#include <QReadWriteLock>
+#include <QIODevice>
 #include <QScopedPointer>
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
-#include <QAudioOutput>
-#else
-#include <QAudioSink>
-#include <QAudioDevice>
-#include <QMediaDevices>
-#endif
+#include <QAudioFormat>
+
 #include <drumstick/backendmanager.h>
 #include <drumstick/rtmidiinput.h>
+
 #include "eas.h"
 #include "filewrapper.h"
 
-class SynthRenderer : public QObject
+class SynthRenderer : public QIODevice
 {
     Q_OBJECT
 
 public:
-    explicit SynthRenderer(int bufTime, QObject *parent = 0);
+    explicit SynthRenderer(QObject *parent = 0);
     virtual ~SynthRenderer();
 
+    /* QIODevice */
+    qint64 readData(char *data, qint64 maxlen) override;
+    qint64 writeData(const char *data, qint64 len) override;
+	qint64 size() const override;
+	qint64 bytesAvailable() const override;
+
+    /* Drumstick::RT */
+    const QString midiDriver() const;
+    void setMidiDriver(const QString newMidiDriver);
     QStringList connections() const;
     QString subscription() const;
     void subscribe(const QString& portName);
+    void start();
     void stop();
     bool stopped();
 
+    /* Sonivox EAS*/
     void initReverb(int reverb_type);
     void initChorus(int chorus_type);
     void setReverbWet(int amount);
     void setChorusLevel(int amount);
-
     void playFile(const QString fileName);
     void startPlayback(const QString fileName);
     void stopPlayback();
 
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
-    const QAudioDeviceInfo &audioDevice() const;
-    void setAudioDevice(const QAudioDeviceInfo &newAudioDevice);
-#else
-    const QAudioDevice &audioDevice() const;
-    void setAudioDevice(const QAudioDevice &newAudioDevice);
-#endif
-    QStringList availableAudioDevices() const;
-    
-    QString audioDeviceName() const;
-    void setAudioDeviceName(const QString newName);
-
-    const QString midiDriver() const;
-    void setMidiDriver(const QString newMidiDriver);
-
-private:
-    void initMIDI();
-    void initEAS();
-    void initAudio();
-    void initAudioDevices();
-    void writeMIDIData(QByteArray &ev);
-
-    void preparePlayback();
-    bool playbackCompleted();
-    void closePlayback();
-    int getPlaybackLocation();
+    /* Qt Multimedia */
+    const QAudioFormat &format() const;
+    qint64 lastBufferSize() const;
+    void resetLastBufferSize();
 
 public slots:
     void noteOn(int chan, int note, int vel);
@@ -92,19 +76,23 @@ public slots:
     void program(const int chan, const int program);
     void channelPressure(const int chan, const int value);
     void pitchBend(const int chan, const int value);
-    void run();
+
+private:
+    void initMIDI();
+    void initEAS();
+    void writeMIDIData(QByteArray &ev);
+
+    void preparePlayback();
+    bool isPlaybackCompleted();
+    void closePlayback();
+    int getPlaybackLocation();
 
 signals:
-    void finished();
     void playbackStopped();
     void playbackTime(int time);
 
 private:
-    bool m_Stopped;
     bool m_isPlaying;
-
-    QReadWriteLock m_mutex;
-    QStringList m_files;
 
     /* Drumstick RT*/
     QString m_midiDriver;
@@ -113,23 +101,16 @@ private:
     drumstick::rt::MIDIInput *m_input;
 
     /* SONiVOX EAS */
-    int m_sampleRate, m_bufferSize, m_channels, m_sample_size;
+    int m_sampleRate, m_renderFrames, m_channels, m_sample_size;
     EAS_DATA_HANDLE m_easData;
     EAS_HANDLE m_streamHandle;
     EAS_HANDLE m_fileHandle;
     FileWrapper *m_currentFile;
+    QStringList m_files;
 
-    /* audio */
-    int m_requestedBufferTime;
-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
-    QScopedPointer<QAudioOutput> m_audioOutput;
-    QList<QAudioDeviceInfo> m_availableDevices;
-    QAudioDeviceInfo m_audioDevice;
-#else
-    QScopedPointer<QAudioSink> m_audioOutput;
-    QList<QAudioDevice> m_availableDevices;
-    QAudioDevice m_audioDevice;
-#endif
+    // Qt Multimedia
+    QAudioFormat m_format;
+    qint64 m_lastBufferSize;
 };
 
 #endif /*SYNTHRENDERER_H_*/
