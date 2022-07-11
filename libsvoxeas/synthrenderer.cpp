@@ -129,12 +129,12 @@ qint64 SynthRenderer::readData(char *data, qint64 maxlen)
 {
     EAS_RESULT eas_res;
     EAS_I32 numGen = 0;
-
     //qDebug() << Q_FUNC_INFO << "starting with maxlen:" << maxlen;
-    const qint64 bufferBytes = m_renderFrames * sizeof(EAS_PCM) * m_channels;
-	Q_ASSERT(bufferBytes > 0 && bufferBytes <= maxlen);
-    //qint64 length = (maxlen / bufferBytes) * bufferBytes;
-    qint64 buflen = bufferBytes;
+    const qint64 bufferSamples = m_renderFrames * m_channels;
+    const qint64 bufferBytes = bufferSamples * sizeof(EAS_PCM);
+    Q_ASSERT(bufferBytes > 0 && bufferBytes <= maxlen);
+    qint64 buflen = (maxlen / bufferBytes) * bufferBytes;
+    qint64 length = buflen;
 
     if (m_isPlaying) {
         int t = getPlaybackLocation();
@@ -142,9 +142,13 @@ qint64 SynthRenderer::readData(char *data, qint64 maxlen)
     }
 
     EAS_PCM *buffer = reinterpret_cast<EAS_PCM *>(data);
-    eas_res = EAS_Render(m_easData, buffer, m_renderFrames, &numGen);
-    if (eas_res != EAS_SUCCESS) {
-        qWarning() << Q_FUNC_INFO << "EAS_Render() error:" << eas_res;
+    while (length > 0) {
+        eas_res = EAS_Render(m_easData, buffer, m_renderFrames, &numGen);
+        if (eas_res != EAS_SUCCESS) {
+            qWarning() << Q_FUNC_INFO << "EAS_Render() error:" << eas_res;
+        }
+        length -= bufferBytes;
+        buffer += bufferSamples;
     }
 
     if (m_isPlaying && isPlaybackCompleted()) {
