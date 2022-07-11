@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
     QCommandLineOption driverOption({"d", "driver"}, "MIDI Driver.", "driver");
     QCommandLineOption portOption({"p", "port"}, "MIDI Port.", "port");
     QCommandLineOption listOption({"s", "subs"}, "List available MIDI Ports.");
-    QCommandLineOption bufferOption({"b", "buffer"},"Audio buffer time in milliseconds.", "buffer_time", "60");
+    QCommandLineOption bufferOption({"b", "buffer"},"Audio buffer time in milliseconds.", "buffer_time", "100");
     QCommandLineOption reverbOption({"r", "reverb"}, "Reverb type (none=-1,presets=0,1,2,3).", "reverb_type", "1");
     QCommandLineOption wetOption({"w", "wet"}, "Reverb wet (0..32765).", "reverb_wet", "25800");
     QCommandLineOption chorusOption({"c", "chorus"}, "Chorus type (none=-1,presets=0,1,2,3).", "chorus_type", "-1");

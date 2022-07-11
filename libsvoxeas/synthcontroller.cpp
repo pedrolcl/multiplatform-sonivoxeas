@@ -99,7 +99,7 @@ SynthController::initAudio()
     m_audioOutput->setCategory("MIDI Synthesizer");
     QObject::connect(m_audioOutput.data(), &QAudioOutput::stateChanged, this, [=](QAudio::State state){
 #else
-    m_audioOutput.reset(new QAudioSink(m_audioDevice, format));
+    m_audioOutput.reset(new QAudioSink(m_audioDevice, m_format));
     QObject::connect(m_audioOutput.data(), &QAudioSink::stateChanged, this, [=](QAudio::State state){
 #endif
         qDebug() << "Audio Output state:" << state << "error:" << m_audioOutput->error();
@@ -122,9 +122,9 @@ SynthController::initAudioDevices()
         }
     }
 #else
-    QMediaDevices devices;
-    auto devices = devices.audioOutputs();
-    m_audioDevice = devices.defaultAudioOutput();
+    QMediaDevices mediaDevices;
+    auto devices = mediaDevices.audioOutputs();
+    m_audioDevice = mediaDevices.defaultAudioOutput();
     foreach(auto &dev, devices) {
         if (dev.isFormatSupported(m_format)) {
             qDebug() << Q_FUNC_INFO << dev.description();
