@@ -19,6 +19,7 @@
 #include <QCloseEvent>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <drumstick/pianokeybd.h>
 #include "mainwindow.h"
 #include "programsettings.h"
 #include "ui_mainwindow.h"
@@ -30,11 +31,12 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     m_ui->setupUi(this);
 
-    m_synth.reset(new SynthController(ProgramSettings::instance()->bufferTime(), this));
+    m_synth.reset(new SynthController(ProgramSettings::instance()->bufferTime()));
     m_synth->renderer()->setMidiDriver(ProgramSettings::instance()->midiDriver());
     m_synth->renderer()->subscribe(ProgramSettings::instance()->portName());
 
     m_ui->combo_Device->addItems(m_synth->availableAudioDevices());
+    m_ui->combo_MIDI->addItems(m_synth->renderer()->connections());
     m_ui->combo_Reverb->addItem(QStringLiteral("Large Hall"), 0);
     m_ui->combo_Reverb->addItem(QStringLiteral("Hall"), 1);
     m_ui->combo_Reverb->addItem(QStringLiteral("Chamber"), 2);
@@ -47,17 +49,23 @@ MainWindow::MainWindow(QWidget *parent) :
     m_ui->combo_Chorus->addItem(QStringLiteral("Preset 4"), 3);
     m_ui->combo_Chorus->addItem(QStringLiteral("None"), -1);
     m_ui->combo_Chorus->setCurrentIndex(4);
+    connect(m_ui->combo_MIDI, SIGNAL(currentIndexChanged(int)), this, SLOT(subscriptionChanged(int)));
     connect(m_ui->combo_Device, SIGNAL(currentIndexChanged(int)), this, SLOT(deviceChanged(int)));
     connect(m_ui->combo_Reverb, SIGNAL(currentIndexChanged(int)), this, SLOT(reverbTypeChanged(int)));
     connect(m_ui->combo_Chorus, SIGNAL(currentIndexChanged(int)), this, SLOT(chorusTypeChanged(int)));
-    connect(m_ui->bufTime, SIGNAL(valueChanged(int)), this, SLOT(bufferSizeChanged(int)));
+    connect(m_ui->spinBuffer, SIGNAL(valueChanged(int)), this, SLOT(bufferSizeChanged(int)));
+    connect(m_ui->spinOctave, SIGNAL(valueChanged(int)), this, SLOT(octaveChanged(int)));
     connect(m_ui->volumeSlider, &QSlider::valueChanged, this, &MainWindow::volumeChanged);
     connect(m_ui->dial_Reverb, &QDial::valueChanged, this, &MainWindow::reverbChanged);
     connect(m_ui->dial_Chorus, &QDial::valueChanged, this, &MainWindow::chorusChanged);
     connect(m_ui->openButton, &QToolButton::clicked, this, &MainWindow::openFile);
     connect(m_ui->playButton, &QToolButton::clicked, this, &MainWindow::playSong);
     connect(m_ui->stopButton, &QToolButton::clicked, this, &MainWindow::stopSong);
-	connect(m_synth->renderer(), SIGNAL(playbackStopped()), this, SLOT(songStopped()));
+    connect(m_ui->pianoKeybd, SIGNAL(noteOn(int,int)), this, SLOT(noteOn(int,int)));
+    connect(m_ui->pianoKeybd, SIGNAL(noteOff(int,int)), this, SLOT(noteOff(int,int)));
+    connect(m_synth->renderer(), SIGNAL(midiNoteOn(int,int)), this, SLOT(showNoteOn(int,int)));
+    connect(m_synth->renderer(), SIGNAL(midiNoteOff(int,int)), this, SLOT(showNoteOff(int,int)));
+    connect(m_synth->renderer(), SIGNAL(playbackStopped()), this, SLOT(songStopped()));
     connect(m_synth.get(), &SynthController::underrunDetected, this, &MainWindow::underrunMessage);
     connect(m_synth.get(), &SynthController::stallDetected, this, &MainWindow::stallMessage);
     
@@ -74,8 +82,9 @@ MainWindow::~MainWindow()
 void
 MainWindow::initialize()
 {
+    m_ui->combo_MIDI->setCurrentText(ProgramSettings::instance()->portName());
     m_ui->combo_Device->setCurrentText(ProgramSettings::instance()->audioDeviceName());
-    m_ui->bufTime->setValue(ProgramSettings::instance()->bufferTime());
+    m_ui->spinBuffer->setValue(ProgramSettings::instance()->bufferTime());
     int reverb = m_ui->combo_Reverb->findData(ProgramSettings::instance()->reverbType());
     m_ui->combo_Reverb->setCurrentIndex(reverb);
     m_ui->dial_Reverb->setValue(ProgramSettings::instance()->reverbWet()); //0..32765
@@ -83,6 +92,11 @@ MainWindow::initialize()
     m_ui->combo_Chorus->setCurrentIndex(chorus);
     m_ui->dial_Chorus->setValue(ProgramSettings::instance()->chorusLevel());
     m_ui->volumeSlider->setValue(ProgramSettings::instance()->volumeLevel());
+    QFont f = QApplication::font();
+    f.setPointSize(72);
+    m_ui->pianoKeybd->setFont(f);
+    m_ui->pianoKeybd->setShowLabels(drumstick::widgets::LabelVisibility::ShowMinimum);
+    m_ui->pianoKeybd->setNumKeys(25, 0);
     m_synth->start();
 }
 
@@ -145,6 +159,14 @@ void MainWindow::deviceChanged(int value)
     ProgramSettings::instance()->setAudioDeviceName(m_ui->combo_Device->itemText(value));
 }
 
+void MainWindow::subscriptionChanged(int value)
+{
+    QString portName = m_ui->combo_MIDI->itemText(value);
+    //qDebug() << Q_FUNC_INFO << value << portName;
+    m_synth->renderer()->subscribe(portName);
+    ProgramSettings::instance()->setPortName(portName);
+}
+
 void MainWindow::bufferSizeChanged(int value)
 {
     //qDebug() << Q_FUNC_INFO << value;
@@ -152,9 +174,15 @@ void MainWindow::bufferSizeChanged(int value)
     ProgramSettings::instance()->setBufferTime(value);
 }
 
+void MainWindow::octaveChanged(int value)
+{
+    m_ui->pianoKeybd->setBaseOctave(value);
+    //ProgramSettings::instance()->setOctave(value);
+}
+
 void MainWindow::volumeChanged(int value)
 {
-    qDebug() << Q_FUNC_INFO << value;
+    //qDebug() << Q_FUNC_INFO << value;
     m_synth->setVolume(value);
     ProgramSettings::instance()->setVolumeLevel(value);
 }
@@ -271,4 +299,24 @@ void MainWindow::stallMessage()
                            "Audio output is stalled right now. Sound cannot be produced."
                            " Please increase the buffer time to avoid this problem.");
     m_synth->stop();
+}
+
+void MainWindow::noteOn(int midiNote, int vel)
+{
+    m_synth->renderer()->noteOn(0, midiNote, vel);
+}
+
+void MainWindow::noteOff(int midiNote, int vel)
+{
+    m_synth->renderer()->noteOff(0, midiNote, vel);
+}
+
+void MainWindow::showNoteOn(int midiNote, int vel)
+{
+    m_ui->pianoKeybd->showNoteOn(midiNote, vel);
+}
+
+void MainWindow::showNoteOff(int midiNote, int vel)
+{
+    m_ui->pianoKeybd->showNoteOff(midiNote, vel);
 }

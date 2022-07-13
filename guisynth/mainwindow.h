@@ -56,7 +56,9 @@ private slots:
     void reverbChanged(int value);
     void chorusChanged(int value);
     void deviceChanged(int value);
+    void subscriptionChanged(int value);
     void bufferSizeChanged(int value);
+    void octaveChanged(int value);
     void volumeChanged(int value);
     void songStopped();
     void underrunMessage();
@@ -66,6 +68,11 @@ private slots:
     void playSong();
     void stopSong();
 
+    void noteOn(const int noteNumber, const int velocity);
+    void noteOff(const int noteNumber, const int velocity);
+    void showNoteOn(const int noteNumber, const int velocity);
+    void showNoteOff(const int noteNumber, const int velocity);
+    
 private:
     Ui::MainWindow *m_ui;
     QScopedPointer<SynthController> m_synth;

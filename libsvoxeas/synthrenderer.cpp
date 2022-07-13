@@ -39,7 +39,7 @@ SynthRenderer::SynthRenderer(QObject *parent):
     m_currentFile(nullptr),
     m_lastBufferSize(0)
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     initMIDI();
     initEAS();
 }
@@ -47,7 +47,7 @@ SynthRenderer::SynthRenderer(QObject *parent):
 void
 SynthRenderer::initMIDI()
 {
-    qDebug() << Q_FUNC_INFO << ProgramSettings::DEFAULT_MIDI_DRIVER;
+    //qDebug() << Q_FUNC_INFO << ProgramSettings::DEFAULT_MIDI_DRIVER;
     if (m_midiDriver.isEmpty()) {
         setMidiDriver(ProgramSettings::DEFAULT_MIDI_DRIVER);
     }
@@ -59,7 +59,7 @@ SynthRenderer::initMIDI()
 void
 SynthRenderer::initEAS()
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     /* SONiVOX EAS initialization */
     EAS_RESULT eas_res;
     EAS_DATA_HANDLE dataHandle;
@@ -122,7 +122,7 @@ SynthRenderer::~SynthRenderer()
           qWarning() << Q_FUNC_INFO << "EAS_Shutdown error: " << eas_res;
       }
     }
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
 }
 
 qint64 SynthRenderer::readData(char *data, qint64 maxlen)
@@ -170,7 +170,7 @@ qint64 SynthRenderer::writeData(const char *data, qint64 len)
 {
     Q_UNUSED(data);
     Q_UNUSED(len);
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
 	return 0;
 }
 
@@ -189,7 +189,7 @@ qint64 SynthRenderer::bytesAvailable() const
 bool
 SynthRenderer::stopped()
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     return !isOpen();
 }
 
@@ -206,7 +206,7 @@ SynthRenderer::start()
 void
 SynthRenderer::stop()
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     if (isOpen()) {
         close();
     }
@@ -215,7 +215,7 @@ SynthRenderer::stop()
 QStringList 
 SynthRenderer::connections() const
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     Q_ASSERT(m_input != nullptr);
     QStringList result;
     auto avail = m_input->connections(true);
@@ -228,33 +228,37 @@ SynthRenderer::connections() const
 QString 
 SynthRenderer::subscription() const
 {
-    qDebug() << Q_FUNC_INFO << m_portName;
+    //qDebug() << Q_FUNC_INFO << m_portName;
     return m_portName;
 }
 
 void
 SynthRenderer::subscribe(const QString& portName)
 {
-    qDebug() << Q_FUNC_INFO << portName;
+    //qDebug() << Q_FUNC_INFO << portName;
     Q_ASSERT(m_input != nullptr);
-    auto avail = m_input->connections(true);
-    auto it = std::find_if(avail.constBegin(), avail.constEnd(),
-                           [portName](const MIDIConnection& c) { 
-                               return c.first == portName; 
-                           });
-    m_input->close();
-    if (it == avail.constEnd()) {
-        MIDIConnection conn;
-        m_input->open(conn);
-    } else {
-        m_input->open(*it);
+    if (m_portName != portName) {
+        auto avail = m_input->connections(true);
+        auto it = std::find_if(avail.constBegin(), avail.constEnd(),
+                               [portName](const MIDIConnection& c) { 
+                                   return c.first == portName; 
+                               });
+        m_input->close();
+        if (it == avail.constEnd()) {
+            MIDIConnection conn;
+            m_input->open(conn);
+            m_portName = conn.first;
+        } else {
+            m_input->open(*it);
+            m_portName = (*it).first;
+        }
     }
 }
 
 const QString 
 SynthRenderer::midiDriver() const
 {
-    qDebug() << Q_FUNC_INFO << m_midiDriver;
+    //qDebug() << Q_FUNC_INFO << m_midiDriver;
     return m_midiDriver;
 }
 
@@ -262,7 +266,7 @@ void
 SynthRenderer::setMidiDriver(const QString newMidiDriver)
 {
     if (m_midiDriver != newMidiDriver) {
-        qDebug() << Q_FUNC_INFO << newMidiDriver;
+        //qDebug() << Q_FUNC_INFO << newMidiDriver;
         m_midiDriver = newMidiDriver;
         if (m_input != nullptr) {
             m_input->disconnect();
@@ -284,29 +288,31 @@ SynthRenderer::setMidiDriver(const QString newMidiDriver)
 void 
 SynthRenderer::noteOn(int chan, int note, int vel) 
 {
-    qDebug() << Q_FUNC_INFO << chan << note << vel;
+    //qDebug() << Q_FUNC_INFO << chan << note << vel;
     QByteArray ev(3, 0);
     ev[0] = MIDI_STATUS_NOTEON | chan;
     ev[1] = 0xff & note;
     ev[2] = 0xff & vel;
     writeMIDIData(ev);
+    emit midiNoteOn(note,vel);
 }
 
 void 
 SynthRenderer::noteOff(int chan, int note, int vel) 
 {
-    qDebug() << Q_FUNC_INFO << chan << note << vel;
+    //qDebug() << Q_FUNC_INFO << chan << note << vel;
     QByteArray ev(3, 0);
     ev[0] = MIDI_STATUS_NOTEOFF | chan;
     ev[1] = 0xff & note;
     ev[2] = 0xff & vel;
     writeMIDIData(ev);
+    emit midiNoteOff(note,vel);
 }
 
 void 
 SynthRenderer::keyPressure(const int chan, const int note, const int value) 
 {
-    qDebug() << Q_FUNC_INFO << chan << note << value;
+    //qDebug() << Q_FUNC_INFO << chan << note << value;
     QByteArray ev(3, 0);
     ev[0] = MIDI_STATUS_KEYPRESURE | chan;
     ev[1] = 0xff & note;
@@ -317,7 +323,7 @@ SynthRenderer::keyPressure(const int chan, const int note, const int value)
 void 
 SynthRenderer::controller(const int chan, const int control, const int value) 
 {
-    qDebug() << Q_FUNC_INFO << chan << control << value;
+    //qDebug() << Q_FUNC_INFO << chan << control << value;
     QByteArray ev(3, 0);
     ev[0] = MIDI_STATUS_CONTROLCHANGE | chan;
     ev[1] = 0xff & control;
@@ -327,7 +333,7 @@ SynthRenderer::controller(const int chan, const int control, const int value)
 
 void SynthRenderer::program(const int chan, const int program) 
 {
-    qDebug() << Q_FUNC_INFO << chan << program;
+    //qDebug() << Q_FUNC_INFO << chan << program;
     QByteArray ev(2, 0);
     ev[0] = MIDI_STATUS_PROGRAMCHANGE | chan;
     ev[1] = 0xff & program;
@@ -336,7 +342,7 @@ void SynthRenderer::program(const int chan, const int program)
 
 void SynthRenderer::channelPressure(const int chan, const int value) 
 {
-    qDebug() << Q_FUNC_INFO << chan << value;
+    //qDebug() << Q_FUNC_INFO << chan << value;
     QByteArray ev(2, 0);
     ev[0] = MIDI_STATUS_CHANNELPRESSURE | chan;
     ev[1] = 0xff & value;
@@ -345,7 +351,7 @@ void SynthRenderer::channelPressure(const int chan, const int value)
 
 void SynthRenderer::pitchBend(const int chan, const int v) 
 {
-    qDebug() << Q_FUNC_INFO << chan << v;;
+    //qDebug() << Q_FUNC_INFO << chan << v;;
     QByteArray ev(3, 0);
     int value = 8192 + v;
     ev[0] = MIDI_STATUS_PITCHBEND | chan;
@@ -393,7 +399,7 @@ SynthRenderer::writeMIDIData(QByteArray &ev)
 void
 SynthRenderer::initReverb(int reverb_type)
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     EAS_RESULT eas_res;
     EAS_BOOL sw = EAS_TRUE;
     if ( reverb_type >= EAS_PARAM_REVERB_LARGE_HALL && reverb_type <= EAS_PARAM_REVERB_ROOM ) {
@@ -412,7 +418,7 @@ SynthRenderer::initReverb(int reverb_type)
 void
 SynthRenderer::initChorus(int chorus_type)
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     EAS_RESULT eas_res;
     EAS_BOOL sw = EAS_TRUE;
     if (chorus_type >= EAS_PARAM_CHORUS_PRESET1 && chorus_type <= EAS_PARAM_CHORUS_PRESET4 ) {
@@ -431,7 +437,7 @@ SynthRenderer::initChorus(int chorus_type)
 void
 SynthRenderer::setReverbWet(int amount)
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     EAS_RESULT eas_res = EAS_SetParameter(m_easData, EAS_MODULE_REVERB, EAS_PARAM_REVERB_WET, (EAS_I32) amount);
     if (eas_res != EAS_SUCCESS) {
         qWarning() << "EAS_SetParameter error:" << eas_res;
@@ -441,7 +447,7 @@ SynthRenderer::setReverbWet(int amount)
 void
 SynthRenderer::setChorusLevel(int amount)
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     EAS_RESULT eas_res = EAS_SetParameter(m_easData, EAS_MODULE_CHORUS, EAS_PARAM_CHORUS_LEVEL, (EAS_I32) amount);
     if (eas_res != EAS_SUCCESS) {
         qWarning() << "EAS_SetParameter error:" << eas_res;
@@ -451,7 +457,7 @@ SynthRenderer::setChorusLevel(int amount)
 void
 SynthRenderer::playFile(const QString fileName)
 {
-    qDebug() << Q_FUNC_INFO << fileName;
+    //qDebug() << Q_FUNC_INFO << fileName;
     m_files.append(fileName);
 }
 
@@ -510,7 +516,7 @@ SynthRenderer::isPlaybackCompleted()
 void
 SynthRenderer::closePlayback()
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     EAS_RESULT result = EAS_SUCCESS;
     /* close the input file */
     if (m_fileHandle != 0 && (result = EAS_CloseFile(m_easData, m_fileHandle)) != EAS_SUCCESS)
@@ -540,7 +546,7 @@ SynthRenderer::getPlaybackLocation()
 void
 SynthRenderer::startPlayback(const QString fileName)
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     if (!stopped())
     {
         playFile(fileName);
@@ -551,7 +557,7 @@ SynthRenderer::startPlayback(const QString fileName)
 void
 SynthRenderer::stopPlayback()
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     if (!stopped()) {
         closePlayback();
     }

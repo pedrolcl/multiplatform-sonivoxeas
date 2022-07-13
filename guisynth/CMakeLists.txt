@@ -18,6 +18,7 @@ add_executable( mp_guisynth
 target_link_libraries( mp_guisynth
   Qt${QT_VERSION_MAJOR}::Widgets
   Drumstick::RT
+  Drumstick::Widgets
   mp_svoxeas
 )
 

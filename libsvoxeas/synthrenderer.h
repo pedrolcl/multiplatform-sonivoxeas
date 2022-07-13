@@ -88,6 +88,8 @@ private:
     int getPlaybackLocation();
 
 signals:
+    void midiNoteOn(const int note, const int vel);
+    void midiNoteOff(const int note, const int vel);
     void playbackStopped();
     void playbackTime(int time);
 
