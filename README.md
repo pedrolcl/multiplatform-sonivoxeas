@@ -3,8 +3,8 @@ Multiplatform Sonivox EAS for Qt
 
 This project is a Linux MIDI Synth based on the Sonivox EAS Synthesizer published by Google on the Android Open Source Project.
 It is a real time GM synthesizer without needing external soundfonts, using embedded samples instead. It consumes very little resources, so it may be indicated in projects for small embedded devices.
-This multiplatform version uses Qt Multimedia audio output and Drumstick::RT MIDI input on all supported platforms.
 This repository is a fork of the older project [Linux-SonivoxEas](https://github.com/pedrolcl/Linux-SonivoxEas) which uses PulseAudio output and ALSA Sequencer MIDI input, so it is a Linux only application.
+On the other hand, this multiplatform version uses Qt Multimedia audio output and Drumstick::RT MIDI input on all supported platforms.
 
 ![Screenshot](screenshot.png)
 
