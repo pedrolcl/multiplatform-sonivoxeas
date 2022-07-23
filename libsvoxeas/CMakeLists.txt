@@ -25,7 +25,7 @@ set_target_properties( mp_svoxeas PROPERTIES
 
 target_link_libraries( mp_svoxeas 
     PUBLIC
-        sonivox
+        sonivox::sonivox
         Qt${QT_VERSION_MAJOR}::Core
         Qt${QT_VERSION_MAJOR}::Multimedia
     PRIVATE
