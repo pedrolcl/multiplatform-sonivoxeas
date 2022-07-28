@@ -1,7 +1,7 @@
 #!/usr/bin/env xdg-open
 [Desktop Entry]
 Name=SonivoxEas MIDI Synth
-Exec=guisynth %f
+Exec=mp_guisynth %f
 Icon=sonivoxeas
 Terminal=false
 Type=Application
