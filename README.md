@@ -10,7 +10,7 @@ On the other hand, this multiplatform version uses Qt Multimedia audio output an
 
 The library uses Drumstick::RT MIDI input and Qt audio output. Complete compile-time dependencies are:
 * Qt5 or Qt6, including QtMultimedia. http://www.qt.io/
-* Drumstick 2, for Drumstick::RT MIDI input and the Drumstick::Widgets piano component. http://sourceforge.net/projects/drumstick/
+* Drumstick 2.6, for Drumstick::RT MIDI input and the Drumstick::Widgets piano component. http://sourceforge.net/projects/drumstick/
 
 Just to clarify the Drumstick dependency: this project requires Drumstick::RT, but Drumstick does not depend on this project at all. There is a Drumstick::RT backend that includes the Sonivox synth as well, but both projects are independent regarding this synthesizer.
 
