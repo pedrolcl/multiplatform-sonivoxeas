@@ -52,7 +52,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 This project includes code from the Sonivox EAS synthesizer, Copyright Sonic Network Inc. 2006. 
 Sonivox EAS belongs to the Android Open Source Project. It has been forked from the official repositories:
 
-https://android.googlesource.com/platform/external/sonivox/
+https://github.com/pedrolcl/sonivox
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. 
 You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
