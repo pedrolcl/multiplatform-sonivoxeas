@@ -9,3 +9,4 @@ Categories=AudioVideo;Audio;Midi;
 Keywords=Music;Midi;Player;
 MimeType=audio/midi;audio/x-midi;
 Comment=SonivoxEas MIDI Synth
+StartupWMClass=mp_GUISynth
