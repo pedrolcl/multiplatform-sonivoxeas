@@ -12,10 +12,26 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(GNUInstallDirs)
 
-find_package(QT NAMES Qt5 Qt6 REQUIRED)
+option(USE_QT "Choose which Qt major version (5 or 6) to prefer. By default uses whatever is found")
+
+if (USE_QT)
+    if (NOT (USE_QT EQUAL 5 OR USE_QT EQUAL 6))
+        message(FATAL_ERROR "Wrong Qt major version. Only 5 and 6 are valid options")
+    endif()
+endif()
+
+if (USE_QT EQUAL 5)
+    find_package(QT NAMES Qt5 REQUIRED)
+elseif (USE_QT EQUAL 6)
+    find_package(QT NAMES Qt6 REQUIRED)
+else()
+    find_package(QT NAMES Qt5 Qt6 REQUIRED)
+endif()
+
 if ((CMAKE_SYSTEM_NAME MATCHES "Linux") AND (QT_VERSION_MAJOR EQUAL 6) AND (QT_VERSION VERSION_LESS 6.4))
     message(WARNING "Unsupported Qt version ${QT_VERSION} for ${CMAKE_SYSTEM_NAME}")
 endif()
+
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Core Gui Widgets Multimedia REQUIRED)
 find_package(Drumstick 2.6 COMPONENTS RT Widgets REQUIRED)
 
