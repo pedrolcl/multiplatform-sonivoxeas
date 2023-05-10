@@ -58,7 +58,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_ui->volumeSlider, &QSlider::valueChanged, this, &MainWindow::volumeChanged);
     connect(m_ui->dial_Reverb, &QDial::valueChanged, this, &MainWindow::reverbChanged);
     connect(m_ui->dial_Chorus, &QDial::valueChanged, this, &MainWindow::chorusChanged);
-    connect(m_ui->openButton, &QToolButton::clicked, this, &MainWindow::openFile);
+    connect(m_ui->openSMFButton, &QToolButton::clicked, this, &MainWindow::openFile);
     connect(m_ui->playButton, &QToolButton::clicked, this, &MainWindow::playSong);
     connect(m_ui->stopButton, &QToolButton::clicked, this, &MainWindow::stopSong);
     connect(m_ui->pianoKeybd, SIGNAL(noteOn(int,int)), this, SLOT(noteOn(int,int)));
@@ -261,18 +261,18 @@ MainWindow::updateState(PlayerState newState)
         case EmptyState:
             m_ui->playButton->setEnabled(false);
             m_ui->stopButton->setEnabled(false);
-            m_ui->openButton->setEnabled(true);
+            m_ui->openSMFButton->setEnabled(true);
             break;
         case PlayingState:
             m_ui->playButton->setEnabled(false);
             m_ui->stopButton->setEnabled(true);
-            m_ui->openButton->setEnabled(false);
+            m_ui->openSMFButton->setEnabled(false);
             break;
         case StoppedState:
             m_ui->stopButton->setEnabled(true);
             m_ui->playButton->setEnabled(true);
             m_ui->playButton->setChecked(false);
-            m_ui->openButton->setEnabled(true);
+            m_ui->openSMFButton->setEnabled(true);
             break;
         default:
             break;

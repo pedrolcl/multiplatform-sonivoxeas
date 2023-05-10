@@ -59,6 +59,7 @@ public:
     void initChorus(int chorus_type);
     void setReverbWet(int amount);
     void setChorusLevel(int amount);
+    void initDLSfile(const QString& dlsFile);
     void playFile(const QString fileName);
     void startPlayback(const QString fileName);
     void stopPlayback();
@@ -67,6 +68,8 @@ public:
     const QAudioFormat &format() const;
     qint64 lastBufferSize() const;
     void resetLastBufferSize();
+
+    void uninitEAS();
 
 public slots:
     void noteOn(int chan, int note, int vel);
@@ -109,6 +112,7 @@ private:
     EAS_HANDLE m_fileHandle;
     FileWrapper *m_currentFile;
     QStringList m_files;
+    QString m_dlsFile;
 
     // Qt Multimedia
     QAudioFormat m_format;

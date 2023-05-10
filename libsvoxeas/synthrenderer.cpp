@@ -77,6 +77,18 @@ SynthRenderer::initEAS()
       return;
     }
 
+    if (!m_dlsFile.isEmpty()) {
+      FileWrapper dlsFile(m_dlsFile);
+      if (dlsFile.ok()) {
+          eas_res = EAS_LoadDLSCollection(dataHandle, nullptr, dlsFile.getLocator());
+          if (eas_res != EAS_SUCCESS) {
+              qWarning() << QString("EAS_LoadDLSCollection(%1) error: %2").arg(m_dlsFile).arg(eas_res);
+          }
+      } else {
+          qWarning() << "Failed to open" << m_dlsFile;
+      }
+    }
+
     eas_res = EAS_OpenMIDIStream(dataHandle, &handle, NULL);
     if (eas_res != EAS_SUCCESS) {
       qCritical() << Q_FUNC_INFO << "EAS_OpenMIDIStream error: " << eas_res;
@@ -105,12 +117,8 @@ SynthRenderer::initEAS()
 #endif
 }
 
-SynthRenderer::~SynthRenderer()
+void SynthRenderer::uninitEAS()
 {
-    if (m_input != nullptr) {
-        m_input->disconnect();
-        m_input->close();
-    }
     EAS_RESULT eas_res;
     if (m_easData != 0 && m_streamHandle != 0) {
       eas_res = EAS_CloseMIDIStream(m_easData, m_streamHandle);
@@ -122,6 +130,15 @@ SynthRenderer::~SynthRenderer()
           qWarning() << Q_FUNC_INFO << "EAS_Shutdown error: " << eas_res;
       }
     }
+}
+
+SynthRenderer::~SynthRenderer()
+{
+    if (m_input != nullptr) {
+        m_input->disconnect();
+        m_input->close();
+    }
+    uninitEAS();
     //qDebug() << Q_FUNC_INFO;
 }
 
@@ -451,6 +468,15 @@ SynthRenderer::setChorusLevel(int amount)
     EAS_RESULT eas_res = EAS_SetParameter(m_easData, EAS_MODULE_CHORUS, EAS_PARAM_CHORUS_LEVEL, (EAS_I32) amount);
     if (eas_res != EAS_SUCCESS) {
         qWarning() << "EAS_SetParameter error:" << eas_res;
+    }
+}
+
+void SynthRenderer::initDLSfile(const QString &dlsFile)
+{
+    if (m_dlsFile != dlsFile) {
+        m_dlsFile = dlsFile;
+        uninitEAS();
+        initEAS();
     }
 }
 
