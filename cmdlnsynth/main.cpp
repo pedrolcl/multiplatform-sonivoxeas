@@ -55,10 +55,11 @@ int main(int argc, char *argv[])
     parser.setApplicationDescription("Command Line MIDI Synthesizer and Player");
     parser.addVersionOption();
     parser.addHelpOption();
-    QCommandLineOption driverOption({"d", "driver"}, "MIDI Driver.", "driver");
+    QCommandLineOption driverOption({"m", "driver"}, "MIDI Driver.", "midi_driver");
     QCommandLineOption portOption({"p", "port"}, "MIDI Port.", "port");
     QCommandLineOption listOption({"s", "subs"}, "List available MIDI Ports.");
     QCommandLineOption bufferOption({"b", "buffer"},"Audio buffer time in milliseconds.", "buffer_time", "100");
+    QCommandLineOption dlsOption({"d", "dls"}, "DLS Soundfont.", "file.dls");
     QCommandLineOption reverbOption({"r", "reverb"}, "Reverb type (none=-1,presets=0,1,2,3).", "reverb_type", "1");
     QCommandLineOption wetOption({"w", "wet"}, "Reverb wet (0..32765).", "reverb_wet", "25800");
     QCommandLineOption chorusOption({"c", "chorus"}, "Chorus type (none=-1,presets=0,1,2,3).", "chorus_type", "-1");
@@ -68,6 +69,7 @@ int main(int argc, char *argv[])
     parser.addOption(portOption);
     parser.addOption(listOption);
     parser.addOption(bufferOption);
+    parser.addOption(dlsOption);
     parser.addOption(reverbOption);
     parser.addOption(chorusOption);
     parser.addOption(wetOption);
@@ -96,6 +98,9 @@ int main(int argc, char *argv[])
             fputs("Wrong buffer time.\n", stderr);
             parser.showHelp(1);
         }
+    }
+    if (parser.isSet(dlsOption)) {
+        ProgramSettings::instance()->setDlsFile(parser.value(dlsOption));
     }
     if (parser.isSet(wetOption)) {
         int n = parser.value(wetOption).toInt();
@@ -168,6 +173,7 @@ int main(int argc, char *argv[])
     synth->renderer()->initReverb(ProgramSettings::instance()->reverbType());
     synth->renderer()->setChorusLevel(ProgramSettings::instance()->chorusLevel());
     synth->renderer()->initChorus(ProgramSettings::instance()->chorusType());
+    synth->renderer()->initDLSfile(ProgramSettings::instance()->dlsFile());
     synth->setAudioDeviceName(ProgramSettings::instance()->audioDeviceName());
     QObject::connect(synth.get(), &SynthController::underrunDetected, &app, []{
         fputs("Underrun error detected. Please increase the audio buffer size.\n", stderr);

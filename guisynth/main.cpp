@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
     }
     QStringList args = parser.positionalArguments();
     if (!args.isEmpty())
-        w.readFile(args.first());
+        w.readMIDIFile(args.first());
     w.show();
     return app.exec();
 }

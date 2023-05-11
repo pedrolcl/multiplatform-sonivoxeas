@@ -58,7 +58,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_ui->volumeSlider, &QSlider::valueChanged, this, &MainWindow::volumeChanged);
     connect(m_ui->dial_Reverb, &QDial::valueChanged, this, &MainWindow::reverbChanged);
     connect(m_ui->dial_Chorus, &QDial::valueChanged, this, &MainWindow::chorusChanged);
-    connect(m_ui->openSMFButton, &QToolButton::clicked, this, &MainWindow::openFile);
+    connect(m_ui->openSMFButton, &QToolButton::clicked, this, &MainWindow::openMIDIFile);
+    connect(m_ui->openDLSButton, &QToolButton::clicked, this, &MainWindow::openDLSFile);
     connect(m_ui->playButton, &QToolButton::clicked, this, &MainWindow::playSong);
     connect(m_ui->stopButton, &QToolButton::clicked, this, &MainWindow::stopSong);
     connect(m_ui->pianoKeybd, SIGNAL(noteOn(int,int)), this, SLOT(noteOn(int,int)));
@@ -92,6 +93,15 @@ MainWindow::initialize()
     m_ui->combo_Chorus->setCurrentIndex(chorus);
     m_ui->dial_Chorus->setValue(ProgramSettings::instance()->chorusLevel());
     m_ui->volumeSlider->setValue(ProgramSettings::instance()->volumeLevel());
+    QFileInfo dlsInfo(ProgramSettings::instance()->dlsFile());
+    if (dlsInfo.exists() && dlsInfo.isReadable()) {
+        readDLSFile(dlsInfo);
+    } else {
+        m_ui->lblDLSFile->setText("[empty]");
+        m_dlsFile.clear();
+        ProgramSettings::instance()->setDlsFile(m_dlsFile);
+        m_synth->renderer()->initDLSfile(m_dlsFile);
+    }
     QFont f = QApplication::font();
     f.setPointSize(72);
     m_ui->pianoKeybd->setFont(f);
@@ -188,7 +198,7 @@ void MainWindow::volumeChanged(int value)
 }
 
 void
-MainWindow::readFile(const QString &file)
+MainWindow::readMIDIFile(const QString &file)
 {
     if (!file.isEmpty() && file != m_songFile) {
         QFileInfo f(file);
@@ -213,7 +223,7 @@ void MainWindow::listPorts()
 }
 
 void
-MainWindow::openFile()
+MainWindow::openMIDIFile()
 {
     QString songFile = QFileDialog::getOpenFileName(this,
         tr("Open MIDI file"),  QDir::homePath(),
@@ -222,7 +232,34 @@ MainWindow::openFile()
         m_ui->lblSong->setText("[empty]");
         updateState(EmptyState);
     } else {
-        readFile(songFile);
+        readMIDIFile(songFile);
+    }
+}
+
+void MainWindow::readDLSFile(const QFileInfo &file)
+{
+    if (file.exists() && file.isReadable()) {
+        m_dlsFile = file.absoluteFilePath();
+        m_ui->lblDLSFile->setText(file.fileName());
+        m_synth->renderer()->initDLSfile(m_dlsFile);
+        ProgramSettings::instance()->setDlsFile(m_dlsFile);
+    }
+}
+
+void
+MainWindow::openDLSFile()
+{
+    QString fileName = QFileDialog::getOpenFileName(this,
+                                                    tr("Open DLS file"),  QDir::homePath(),
+                                                    tr("DLS Files (*.dls)"));
+    if (fileName.isEmpty()) {
+        m_dlsFile.clear();
+        m_ui->lblDLSFile->setText("[empty]");
+        ProgramSettings::instance()->setDlsFile(m_dlsFile);
+        m_synth->renderer()->initDLSfile(m_dlsFile);
+    } else {
+        QFileInfo fInfo(fileName);
+        readDLSFile(fInfo);
     }
 }
 

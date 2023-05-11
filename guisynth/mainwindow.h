@@ -21,6 +21,7 @@
 
 #include <QScopedPointer>
 #include <QMainWindow>
+#include <QFileInfo>
 #include "synthcontroller.h"
 
 enum PlayerState {
@@ -43,7 +44,8 @@ public:
     ~MainWindow();
     void updateState(PlayerState newState);
     void initialize();
-    void readFile(const QString &file);
+    void readMIDIFile(const QString &file);
+    void readDLSFile(const QFileInfo &fileInfo);
     void listPorts();
 
 protected:
@@ -64,7 +66,8 @@ private slots:
     void underrunMessage();
     void stallMessage();
 
-    void openFile();
+    void openMIDIFile();
+    void openDLSFile();
     void playSong();
     void stopSong();
 
@@ -77,6 +80,7 @@ private:
     Ui::MainWindow *m_ui;
     QScopedPointer<SynthController> m_synth;
     QString m_songFile;
+    QString m_dlsFile;
     PlayerState m_state;
 };
 
