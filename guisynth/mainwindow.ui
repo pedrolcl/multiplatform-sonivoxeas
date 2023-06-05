@@ -7,8 +7,14 @@
     <x>0</x>
     <y>0</y>
     <width>474</width>
-    <height>497</height>
+    <height>496</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>474</width>
+    <height>496</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>Sonivox EAS Synth</string>
@@ -30,6 +36,12 @@
       <property name="minimumSize">
        <size>
         <width>450</width>
+        <height>130</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
         <height>130</height>
        </size>
       </property>
@@ -212,7 +224,14 @@
        </widget>
       </item>
       <item row="2" column="1">
-       <widget class="QComboBox" name="combo_MIDI"/>
+       <widget class="QComboBox" name="combo_MIDI">
+        <property name="maximumSize">
+         <size>
+          <width>340</width>
+          <height>16777215</height>
+         </size>
+        </property>
+       </widget>
       </item>
       <item row="3" column="0">
        <widget class="QLabel" name="lblAudioOut">
@@ -240,6 +259,12 @@
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>340</width>
+          <height>16777215</height>
+         </size>
         </property>
        </widget>
       </item>
