@@ -33,9 +33,9 @@ if ((CMAKE_SYSTEM_NAME MATCHES "Linux") AND (QT_VERSION_MAJOR EQUAL 6) AND (QT_V
 endif()
 
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Core Gui Widgets Multimedia REQUIRED)
-find_package(Drumstick 2.6 COMPONENTS RT Widgets REQUIRED)
+find_package(Drumstick 2.7 COMPONENTS RT Widgets REQUIRED)
 
-find_package(sonivox CONFIG)
+find_package(sonivox 3.6.12 CONFIG)
 if (NOT sonivox_FOUND)
     add_subdirectory(sonivox)
 endif()
