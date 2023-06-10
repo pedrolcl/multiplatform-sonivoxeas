@@ -16,29 +16,26 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <csignal>
-#include <QDebug>
-#include <QCoreApplication>
 #include <QCommandLineParser>
-#include <QScopedPointer>
+#include <QCoreApplication>
+#include <QDebug>
 #include <QFileInfo>
+#include <QScopedPointer>
+#include <csignal>
+#include <cstdio>
 
 #include <eas_reverb.h>
 #include "synthcontroller.h"
 #include "programsettings.h"
-
-#if QT_VERSION >= QT_VERSION_CHECK(5,15,0)
-    #define endl Qt::endl
-#endif
 
 QScopedPointer<SynthController> synth;
 
 void signalHandler(int sig)
 {
     if (sig == SIGINT)
-        qDebug() << "SIGINT received. Exiting" << endl;
+        qDebug() << "SIGINT received. Exiting";
     else if (sig == SIGTERM)
-        qDebug() << "SIGTERM received. Exiting" << endl;
+        qDebug() << "SIGTERM received. Exiting";
     synth->stop();
     qApp->quit();
 }

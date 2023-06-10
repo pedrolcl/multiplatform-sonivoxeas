@@ -73,6 +73,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_songFile = QString();
     updateState(EmptyState);
     initialize();
+    adjustSize();
 }
 
 MainWindow::~MainWindow()
