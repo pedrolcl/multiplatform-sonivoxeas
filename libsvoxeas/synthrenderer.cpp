@@ -251,17 +251,16 @@ SynthRenderer::subscription() const
 void
 SynthRenderer::subscribe(const QString& portName)
 {
-    //qDebug() << Q_FUNC_INFO << portName;
+    //qDebug() << Q_FUNC_INFO << newPort;
     Q_ASSERT(m_input != nullptr);
-    if (m_portName != portName) {
+    if (m_portName != portName || portName.isEmpty()) {
         auto avail = m_input->connections(true);
-        auto it = std::find_if(avail.constBegin(), avail.constEnd(),
-                               [portName](const MIDIConnection& c) { 
-                                   return c.first == portName; 
-                               });
+        auto it = std::find_if(avail.constBegin(),
+                               avail.constEnd(),
+                               [portName](const MIDIConnection &c) { return c.first == portName; });
         m_input->close();
         if (it == avail.constEnd()) {
-            MIDIConnection conn;
+            MIDIConnection conn = avail.isEmpty() ? MIDIConnection() : avail.first();
             m_input->open(conn);
             m_portName = conn.first;
         } else {
