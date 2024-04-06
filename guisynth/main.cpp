@@ -23,6 +23,7 @@
 
 int main(int argc, char *argv[])
 {
+    QApplication::setStyle("fusion");
     QApplication app(argc, argv);
     QApplication::setOrganizationName("SonivoxEAS");
     QApplication::setApplicationName("mp_GUISynth");

@@ -26,6 +26,9 @@ endif()
 
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Core Gui Widgets Multimedia REQUIRED)
 find_package(Drumstick 2.9 COMPONENTS RT Widgets REQUIRED)
+if (Drumstick_FOUND)
+    message(STATUS "Drumstick v${Drumstick_VERSION} found")
+endif()
 
 find_package(sonivox 3.6.13 CONFIG)
 if (sonivox_FOUND)
@@ -35,6 +38,7 @@ else()
     include(CMakePrintHelpers)
     cmake_print_properties(TARGETS sonivox::sonivox PROPERTIES TYPE VERSION SOVERSION)
 endif()
+
 add_subdirectory(libsvoxeas)
 add_subdirectory(cmdlnsynth)
 add_subdirectory(guisynth)

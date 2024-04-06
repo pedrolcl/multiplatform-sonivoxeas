@@ -11,6 +11,7 @@ This repository is a fork of the older project [Linux-SonivoxEas](https://github
 On the other hand, this multiplatform version uses Qt Multimedia audio output and Drumstick::RT MIDI input on all supported platforms.
 
 ![Screenshot](screenshot.png)
+![Screenshot Windows](screenshot_win.png)
 
 The library uses Drumstick::RT MIDI input and Qt audio output. Complete compile-time dependencies are:
 * Qt5 or Qt6, including QtMultimedia. http://www.qt.io/
