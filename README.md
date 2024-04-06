@@ -1,7 +1,9 @@
 Multiplatform Sonivox EAS for Qt
 ================================
 
-[![Build on Linux](https://github.com/pedrolcl/multiplatform-sonivoxeas/actions/workflows/linux-build.yml/badge.svg)](https://github.com/pedrolcl/multiplatform-sonivoxeas/actions/workflows/linux-build.yml)
+[![Build on Linux](https://github.com/pedrolcl/multiplatform-sonivoxeas/actions/workflows/linux-build.yml/badge.svg)](https://github.com/pedrolcl/multiplatform-sonivoxeas/actions/workflows/linux-build.yml)  
+
+[![Build on Windows with MSYS2](https://github.com/pedrolcl/multiplatform-sonivoxeas/actions/workflows/windows-build.yml/badge.svg)](https://github.com/pedrolcl/multiplatform-sonivoxeas/actions/workflows/windows-build.yml)  
 
 This project is a multiplatform MIDI Synth based on the Sonivox EAS Synthesizer published by Google on the Android Open Source Project.
 It is a real time GM synthesizer without needing external soundfonts, using embedded samples instead. It consumes very little resources, so it may be indicated in projects for small embedded devices.
