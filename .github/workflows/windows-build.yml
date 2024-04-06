@@ -28,6 +28,23 @@ jobs:
         shell: msys2 {0}
 
     steps:
+    - name: '${{ matrix.icon }} Setup MSYS2'
+      uses: msys2/setup-msys2@v2
+      with:
+        release: false
+        msystem: ${{matrix.sys}}
+        install: >-
+          git
+          make
+        pacboy: >-
+          toolchain:p
+          cmake:p
+          ninja:p
+          qt6-base:p
+          qt6-tools:p
+          qt6-translations:p
+          qt6-multimedia:p
+
     - name: '${{ matrix.icon }} Checkout'
       uses: actions/checkout@v4
 
@@ -52,22 +69,6 @@ jobs:
 
     - name: '${{ matrix.icon }} Extract Drumstick'
       run: tar xvf ${{env.DRUMSTICK}}.tar
-
-    - name: '${{ matrix.icon }} Setup MSYS2'
-      uses: msys2/setup-msys2@v2
-      with:
-        release: false
-        msystem: ${{matrix.sys}}
-        install: >-
-          git
-          make
-        pacboy: >-
-          toolchain:p
-          cmake:p
-          ninja:p
-          qt6-base:p
-          qt6-tools:p
-          qt6-translations:p
 
     - name: '${{ matrix.icon }} Configure CMake'
       run: cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_PREFIX_PATH="${{env.DRUMSTICK}};${{env.SONIVOX}}"
