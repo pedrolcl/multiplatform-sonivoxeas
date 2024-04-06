@@ -24,7 +24,6 @@
 
 #include <eas_reverb.h>
 #include <eas_chorus.h>
-#include <drumstick/sequencererror.h>
 
 #include "programsettings.h"
 #include "synthrenderer.h"
