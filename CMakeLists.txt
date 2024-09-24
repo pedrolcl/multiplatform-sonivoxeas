@@ -20,8 +20,8 @@ else()
     find_package(QT NAMES Qt6 REQUIRED)
 endif()
 
-if ((CMAKE_SYSTEM_NAME MATCHES "Linux") AND (QT_VERSION_MAJOR EQUAL 6) AND (QT_VERSION VERSION_LESS 6.4))
-    message(WARNING "Unsupported Qt version ${QT_VERSION} for ${CMAKE_SYSTEM_NAME}")
+if (((CMAKE_SYSTEM_NAME MATCHES "Linux") AND (QT_VERSION_MAJOR EQUAL 6) AND (QT_VERSION VERSION_LESS 6.4)) OR QT_VERSION VERSION_GREATER 6.5.99)
+    message(FATAL_ERROR "Unsupported Qt version ${QT_VERSION} for ${CMAKE_SYSTEM_NAME}")
 endif()
 
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Core Gui Widgets Multimedia REQUIRED)
