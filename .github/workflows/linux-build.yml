@@ -30,10 +30,10 @@ jobs:
 
     - uses: dawidd6/action-download-artifact@v3
       with:
-        name: ${{env.SONIVOXNAME}}
+        name: ${{env.SONIVOXNAME}}-linux
         github_token: ${{secrets.GH_PAT}}
         repo: pedrolcl/sonivox
-        workflow: cmake.yml
+        workflow: cmake-linux.yml
 
     - name: Extract downloaded files
       run: tar xvf ${{env.SONIVOXNAME}}.tar
