@@ -10,7 +10,7 @@ on:
 env:
   BUILD_TYPE: RelWithDebInfo
   DRUMSTICK: DrumstickV2
-  SONIVOX: SonivoxV3
+  SONIVOX: SonivoxV4
 
 jobs:
   build:
@@ -52,7 +52,7 @@ jobs:
     - name: '${{ matrix.icon }} Download Sonivox'
       uses: dawidd6/action-download-artifact@v3
       with:
-        name: ${{env.SONIVOX}}-${{matrix.sys}}
+        name: ${{env.SONIVOX}}-msys2-${{matrix.sys}}
         github_token: ${{secrets.GH_PAT}}
         repo: pedrolcl/sonivox
         allow_forks: false

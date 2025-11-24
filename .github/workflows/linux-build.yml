@@ -13,9 +13,9 @@ env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: RelWithDebInfo
   DRUMSTICKNAME: DrumstickV2
-  SONIVOXNAME: SonivoxV3
+  SONIVOXNAME: SonivoxV4
   DRUMSTICK_LOCATION: ${{github.workspace}}/DrumstickV2
-  SONIVOX_LOCATION: ${{github.workspace}}/SonivoxV3
+  SONIVOX_LOCATION: ${{github.workspace}}/SonivoxV4
 
 jobs:
   build:
@@ -31,7 +31,7 @@ jobs:
 
     - uses: dawidd6/action-download-artifact@v3
       with:
-        name: ${{env.SONIVOXNAME}}-linux
+        name: ${{env.SONIVOXNAME}}-Linux-x64-r44s16
         github_token: ${{secrets.GH_PAT}}
         repo: pedrolcl/sonivox
         allow_forks: false
@@ -54,7 +54,7 @@ jobs:
     - name: Install Qt
       uses: jurplel/install-qt-action@v3
       with:
-        version: '6.5.*'
+        version: '6.10.*'
         modules: qtmultimedia
 
     - name: Dependencies
