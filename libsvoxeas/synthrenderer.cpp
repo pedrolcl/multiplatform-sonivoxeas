@@ -46,6 +46,13 @@ SynthRenderer::SynthRenderer(QObject *parent):
 void
 SynthRenderer::initMIDI()
 {
+    auto defaultsMap = QVariantMap{{BackendManager::QSTR_DRUMSTICKRT_PUBLICNAMEIN,
+                                    QStringLiteral("MIDI IN")},
+                                   {BackendManager::QSTR_DRUMSTICKRT_PUBLICNAMEOUT,
+                                    QStringLiteral("MIDI OUT")}};
+    m_man.refresh(defaultsMap);
+    auto inputs = m_man.availableInputs();
+    qDebug() << Q_FUNC_INFO << inputs;
     //qDebug() << Q_FUNC_INFO << ProgramSettings::DEFAULT_MIDI_DRIVER;
     if (m_midiDriver.isEmpty()) {
         setMidiDriver(ProgramSettings::DEFAULT_MIDI_DRIVER);
@@ -145,26 +152,31 @@ qint64 SynthRenderer::readData(char *data, qint64 maxlen)
 {
     EAS_RESULT eas_res;
     EAS_I32 numGen = 0;
-    //qDebug() << Q_FUNC_INFO << "starting with maxlen:" << maxlen;
     const qint64 bufferSamples = m_renderFrames * m_channels;
     const qint64 bufferBytes = bufferSamples * sizeof(EAS_PCM);
-    Q_ASSERT(bufferBytes > 0 && bufferBytes <= maxlen);
-    qint64 buflen = (maxlen / bufferBytes) * bufferBytes;
-    qint64 length = buflen;
+    // qDebug() << Q_FUNC_INFO << "starting with maxlen:" << maxlen << bufferBytes;
 
     if (m_isPlaying) {
         int t = getPlaybackLocation();
         emit playbackTime(t);
     }
 
-    EAS_PCM *buffer = reinterpret_cast<EAS_PCM *>(data);
-    while (length > 0) {
-        eas_res = EAS_Render(m_easData, buffer, m_renderFrames, &numGen);
-        if (eas_res != EAS_SUCCESS) {
+    while (m_audioBuffer.size() < maxlen) {
+        QByteArray buf{bufferBytes, '\0'};
+        eas_res = EAS_Render(m_easData,
+                             reinterpret_cast<EAS_PCM *>(buf.data()),
+                             m_renderFrames,
+                             &numGen);
+        if (eas_res == EAS_SUCCESS) {
+            m_audioBuffer.append(buf);
+        } else {
             qWarning() << Q_FUNC_INFO << "EAS_Render() error:" << eas_res;
         }
-        length -= bufferBytes;
-        buffer += bufferSamples;
+    }
+
+    if (maxlen > 0) {
+        memcpy(data, m_audioBuffer.constData(), maxlen);
+        m_audioBuffer.remove(0, maxlen);
     }
 
     if (m_isPlaying && isPlaybackCompleted()) {
@@ -177,9 +189,9 @@ qint64 SynthRenderer::readData(char *data, qint64 maxlen)
         }
     }
 
-    m_lastBufferSize = buflen;
+    m_lastBufferSize = maxlen;
     //qDebug() << Q_FUNC_INFO << "before returning" << buflen;
-    return buflen;
+    return maxlen;
 }
 
 qint64 SynthRenderer::writeData(const char *data, qint64 len)

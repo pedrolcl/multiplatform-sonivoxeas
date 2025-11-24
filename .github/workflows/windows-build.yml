@@ -55,6 +55,7 @@ jobs:
         name: ${{env.SONIVOX}}-${{matrix.sys}}
         github_token: ${{secrets.GH_PAT}}
         repo: pedrolcl/sonivox
+        allow_forks: false
         workflow: cmake-win.yml
 
     - name: '${{ matrix.icon }} Extract Sonivox'
@@ -66,6 +67,7 @@ jobs:
         name: ${{env.DRUMSTICK}}-${{matrix.sys}}
         github_token: ${{secrets.GH_PAT}}
         repo: pedrolcl/drumstick
+        allow_forks: false
         workflow: cmake-win.yml
 
     - name: '${{ matrix.icon }} Extract Drumstick'

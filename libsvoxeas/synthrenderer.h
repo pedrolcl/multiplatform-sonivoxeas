@@ -117,6 +117,7 @@ private:
     // Qt Multimedia
     QAudioFormat m_format;
     qint64 m_lastBufferSize;
+    QByteArray m_audioBuffer{1024, '\0'};
 };
 
 #endif /*SYNTHRENDERER_H_*/
