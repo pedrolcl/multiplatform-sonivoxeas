@@ -56,7 +56,7 @@ jobs:
         github_token: ${{secrets.GH_PAT}}
         repo: pedrolcl/sonivox
         allow_forks: false
-        workflow: windows-ci.yml
+        workflow: win-msys2.yml
         branch: devel
 
     - name: '${{ matrix.icon }} Extract Sonivox'
