@@ -19,10 +19,12 @@
 #include <QCloseEvent>
 #include <QFileDialog>
 #include <QMessageBox>
-#include <drumstick/pianokeybd.h>
+#include <QMimeData>
+
 #include "mainwindow.h"
 #include "programsettings.h"
 #include "ui_mainwindow.h"
+#include <drumstick/pianokeybd.h>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -363,4 +365,37 @@ void MainWindow::showNoteOn(int midiNote, int vel)
 void MainWindow::showNoteOff(int midiNote, int vel)
 {
     m_ui->pianoKeybd->showNoteOff(midiNote, vel);
+}
+
+void MainWindow::dragEnterEvent(QDragEnterEvent *event)
+{
+    const QMimeData *mimeData = event->mimeData();
+    if (mimeData->hasUrls()) {
+        event->acceptProposedAction();
+    }
+}
+
+void MainWindow::dropEvent(QDropEvent *event)
+{
+    const QMimeData *mimeData = event->mimeData();
+    if (mimeData->hasUrls()) {
+        QString path;
+        const QList<QUrl> urlList = mimeData->urls();
+        if (urlList.count() > 0) {
+            path = urlList.first().toLocalFile();
+        }
+
+        if (!path.isEmpty()) {
+            QFileInfo fInfo(path);
+            if (fInfo.exists()) {
+                const auto ext = fInfo.suffix().toLower();
+                if (ext == "mid" || ext == "midi" || ext == "kar" || ext == "rmi" || ext == "xmf"
+                    || ext == "mxmf") {
+                    readMIDIFile(fInfo.absoluteFilePath());
+                } else if (ext == "dls" || ext == "sf2") {
+                    readSoundfont(fInfo);
+                }
+            }
+        }
+    }
 }
