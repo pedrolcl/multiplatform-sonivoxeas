@@ -83,16 +83,18 @@ SynthRenderer::initEAS()
       return;
     }
 
-    if (!m_dlsFile.isEmpty()) {
-      FileWrapper dlsFile(m_dlsFile);
-      if (dlsFile.ok()) {
-          eas_res = EAS_LoadDLSCollection(dataHandle, nullptr, dlsFile.getLocator());
-          if (eas_res != EAS_SUCCESS) {
-              qWarning() << QString("EAS_LoadDLSCollection(%1) error: %2").arg(m_dlsFile).arg(eas_res);
-          }
-      } else {
-          qWarning() << "Failed to open" << m_dlsFile;
-      }
+    if (!m_Soundfont.isEmpty()) {
+        FileWrapper Soundfont(m_Soundfont);
+        if (Soundfont.ok()) {
+            eas_res = EAS_LoadDLSCollection(dataHandle, nullptr, Soundfont.getLocator());
+            if (eas_res != EAS_SUCCESS) {
+                qWarning() << QString("EAS_LoadDLSCollection(%1) error: %2")
+                                  .arg(m_Soundfont)
+                                  .arg(eas_res);
+            }
+        } else {
+            qWarning() << "Failed to open" << m_Soundfont;
+        }
     }
 
     eas_res = EAS_OpenMIDIStream(dataHandle, &handle, NULL);
@@ -397,6 +399,12 @@ void SynthRenderer::resetLastBufferSize()
     m_lastBufferSize = 0;
 }
 
+void SynthRenderer::reserveBuffer(qsizetype size)
+{
+    qDebug() << Q_FUNC_INFO << size;
+    m_audioBuffer.reserve(size);
+}
+
 const QAudioFormat&
 SynthRenderer::format() const
 {
@@ -481,10 +489,10 @@ SynthRenderer::setChorusLevel(int amount)
     }
 }
 
-void SynthRenderer::initDLSfile(const QString &dlsFile)
+void SynthRenderer::initSoundfont(const QString &Soundfont)
 {
-    if (m_dlsFile != dlsFile) {
-        m_dlsFile = dlsFile;
+    if (m_Soundfont != Soundfont) {
+        m_Soundfont = Soundfont;
         uninitEAS();
         initEAS();
     }

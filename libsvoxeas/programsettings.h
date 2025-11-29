@@ -57,8 +57,8 @@ public:
     const QString &portName() const;
     void setPortName(const QString &newPortName);
 
-    QString dlsFile() const;
-    void setDlsFile(const QString &newDlsFile);
+    QString Soundfont() const;
+    void setSoundfont(const QString &newSoundfont);
 
     static const QString DEFAULT_MIDI_DRIVER;
     static const QString DEFAULT_AUDIO_DEVICE;
@@ -93,7 +93,7 @@ private:
     int m_chorusLevel;
     int m_volumeLevel;
     QString m_audioDeviceName;
-    QString m_dlsFile;
+    QString m_Soundfont;
 };
 
 #endif // PROGRAMSETTINGS_H

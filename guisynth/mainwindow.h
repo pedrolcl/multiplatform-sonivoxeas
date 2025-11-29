@@ -45,7 +45,7 @@ public:
     void updateState(PlayerState newState);
     void initialize();
     void readMIDIFile(const QString &file);
-    void readDLSFile(const QFileInfo &fileInfo);
+    void readSoundfont(const QFileInfo &fileInfo);
     void listPorts();
 
 protected:
@@ -67,7 +67,7 @@ private slots:
     void stallMessage();
 
     void openMIDIFile();
-    void openDLSFile();
+    void openSoundfont();
     void playSong();
     void stopSong();
 
@@ -80,7 +80,7 @@ private:
     Ui::MainWindow *m_ui;
     QScopedPointer<SynthController> m_synth;
     QString m_songFile;
-    QString m_dlsFile;
+    QString m_Soundfont;
     PlayerState m_state;
 };
 

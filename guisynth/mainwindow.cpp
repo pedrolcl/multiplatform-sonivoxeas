@@ -59,7 +59,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_ui->dial_Reverb, &QDial::valueChanged, this, &MainWindow::reverbChanged);
     connect(m_ui->dial_Chorus, &QDial::valueChanged, this, &MainWindow::chorusChanged);
     connect(m_ui->openSMFButton, &QToolButton::clicked, this, &MainWindow::openMIDIFile);
-    connect(m_ui->openDLSButton, &QToolButton::clicked, this, &MainWindow::openDLSFile);
+    connect(m_ui->openDLSButton, &QToolButton::clicked, this, &MainWindow::openSoundfont);
     connect(m_ui->playButton, &QToolButton::clicked, this, &MainWindow::playSong);
     connect(m_ui->stopButton, &QToolButton::clicked, this, &MainWindow::stopSong);
     connect(m_ui->pianoKeybd, SIGNAL(noteOn(int,int)), this, SLOT(noteOn(int,int)));
@@ -94,14 +94,14 @@ MainWindow::initialize()
     m_ui->combo_Chorus->setCurrentIndex(chorus);
     m_ui->dial_Chorus->setValue(ProgramSettings::instance()->chorusLevel());
     m_ui->volumeSlider->setValue(ProgramSettings::instance()->volumeLevel());
-    QFileInfo dlsInfo(ProgramSettings::instance()->dlsFile());
+    QFileInfo dlsInfo(ProgramSettings::instance()->Soundfont());
     if (dlsInfo.exists() && dlsInfo.isReadable()) {
-        readDLSFile(dlsInfo);
+        readSoundfont(dlsInfo);
     } else {
-        m_ui->lblDLSFile->setText("[empty]");
-        m_dlsFile.clear();
-        ProgramSettings::instance()->setDlsFile(m_dlsFile);
-        m_synth->renderer()->initDLSfile(m_dlsFile);
+        m_ui->lblSoundfont->setText("[empty]");
+        m_Soundfont.clear();
+        ProgramSettings::instance()->setSoundfont(m_Soundfont);
+        m_synth->renderer()->initSoundfont(m_Soundfont);
     }
     QFont f = QApplication::font();
     f.setPointSize(72);
@@ -226,42 +226,48 @@ void MainWindow::listPorts()
 void
 MainWindow::openMIDIFile()
 {
-    QString songFile = QFileDialog::getOpenFileName(this,
-        tr("Open MIDI file"),  QDir::homePath(),
-        tr("MIDI Files (*.mid *.midi *.kar)"));
+    QString songFile
+        = QFileDialog::getOpenFileName(this,
+                                       tr("Open MIDI file"),
+                                       QString(),
+                                       tr("MIDI Files (*.mid *.midi *.kar *.rmi *.xmf *.mxmf)"));
+    m_synth->stop();
     if (songFile.isEmpty()) {
         m_ui->lblSong->setText("[empty]");
         updateState(EmptyState);
     } else {
         readMIDIFile(songFile);
     }
+    m_synth->start();
 }
 
-void MainWindow::readDLSFile(const QFileInfo &file)
+void MainWindow::readSoundfont(const QFileInfo &file)
 {
     if (file.exists() && file.isReadable()) {
-        m_dlsFile = file.absoluteFilePath();
-        m_ui->lblDLSFile->setText(file.fileName());
-        m_synth->renderer()->initDLSfile(m_dlsFile);
-        ProgramSettings::instance()->setDlsFile(m_dlsFile);
+        m_Soundfont = file.absoluteFilePath();
+        m_ui->lblSoundfont->setText(file.fileName());
+        m_synth->renderer()->initSoundfont(m_Soundfont);
+        ProgramSettings::instance()->setSoundfont(m_Soundfont);
     }
 }
 
-void
-MainWindow::openDLSFile()
+void MainWindow::openSoundfont()
 {
     QString fileName = QFileDialog::getOpenFileName(this,
-                                                    tr("Open DLS file"),  QDir::homePath(),
-                                                    tr("DLS Files (*.dls)"));
+                                                    tr("Open DLS file"),
+                                                    QString(),
+                                                    tr("Soundfonts (*.dls *.sf2)"));
+    m_synth->stop();
     if (fileName.isEmpty()) {
-        m_dlsFile.clear();
-        m_ui->lblDLSFile->setText("[empty]");
-        ProgramSettings::instance()->setDlsFile(m_dlsFile);
-        m_synth->renderer()->initDLSfile(m_dlsFile);
+        m_Soundfont.clear();
+        m_ui->lblSoundfont->setText("[empty]");
+        ProgramSettings::instance()->setSoundfont(m_Soundfont);
+        m_synth->renderer()->initSoundfont(m_Soundfont);
     } else {
         QFileInfo fInfo(fileName);
-        readDLSFile(fInfo);
+        readSoundfont(fInfo);
     }
+    m_synth->start();
 }
 
 void

@@ -49,11 +49,12 @@ void
 SynthController::start()
 {
     qDebug() << Q_FUNC_INFO;
-    m_renderer->start();
     auto bufferBytes = m_format.bytesForDuration(m_requestedBufferTime * 1000);
     qDebug() << Q_FUNC_INFO
              << "Requested buffer size:" << bufferBytes << "bytes,"
              << m_requestedBufferTime << "milliseconds";
+    m_renderer->reserveBuffer(bufferBytes * 2);
+    m_renderer->start();
     m_audioOutput->setBufferSize(bufferBytes);
     m_audioOutput->start(m_renderer.get());
     auto bufferTime = m_format.durationForBytes(m_audioOutput->bufferSize()) / 1000;

@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
         }
     }
     if (parser.isSet(dlsOption)) {
-        ProgramSettings::instance()->setDlsFile(parser.value(dlsOption));
+        ProgramSettings::instance()->setSoundfont(parser.value(dlsOption));
     }
     if (parser.isSet(wetOption)) {
         int n = parser.value(wetOption).toInt();
@@ -170,7 +170,7 @@ int main(int argc, char *argv[])
     synth->renderer()->initReverb(ProgramSettings::instance()->reverbType());
     synth->renderer()->setChorusLevel(ProgramSettings::instance()->chorusLevel());
     synth->renderer()->initChorus(ProgramSettings::instance()->chorusType());
-    synth->renderer()->initDLSfile(ProgramSettings::instance()->dlsFile());
+    synth->renderer()->initSoundfont(ProgramSettings::instance()->Soundfont());
     synth->setAudioDeviceName(ProgramSettings::instance()->audioDeviceName());
     QObject::connect(synth.get(), &SynthController::underrunDetected, &app, []{
         fputs("Underrun error detected. Please increase the audio buffer size.\n", stderr);

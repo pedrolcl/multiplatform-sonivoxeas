@@ -59,7 +59,7 @@ void ProgramSettings::ResetDefaults()
     m_chorusType = DEFAULT_CHORUS_TYPE;
     m_chorusLevel = DEFAULT_CHORUS_LEVEL;
     m_volumeLevel = DEFAULT_VOLUME_LEVEL;
-    m_dlsFile.clear();
+    m_Soundfont.clear();
     emit ValuesChanged();
 }
 
@@ -101,7 +101,7 @@ void ProgramSettings::internalRead(QSettings &settings)
     m_chorusLevel = settings.value("ChorusLevel", DEFAULT_CHORUS_LEVEL).toInt();
     m_audioDeviceName = settings.value("AudioDevice", DEFAULT_AUDIO_DEVICE).toString();
     m_volumeLevel = settings.value("VolumeLevel", DEFAULT_VOLUME_LEVEL).toInt();
-    m_dlsFile = settings.value("DLSfile", QString()).toString();
+    m_Soundfont = settings.value("Soundfont", QString()).toString();
     emit ValuesChanged();
 }
 
@@ -117,18 +117,18 @@ void ProgramSettings::internalSave(QSettings &settings)
     settings.setValue("ChorusLevel", m_chorusLevel);
     settings.setValue("AudioDevice", m_audioDeviceName);
     settings.setValue("VolumeLevel", m_volumeLevel);
-    settings.setValue("DLSfile", m_dlsFile);
+    settings.setValue("Soundfont", m_Soundfont);
     settings.sync();
 }
 
-QString ProgramSettings::dlsFile() const
+QString ProgramSettings::Soundfont() const
 {
-    return m_dlsFile;
+    return m_Soundfont;
 }
 
-void ProgramSettings::setDlsFile(const QString &newDlsFile)
+void ProgramSettings::setSoundfont(const QString &newSoundfont)
 {
-    m_dlsFile = newDlsFile;
+    m_Soundfont = newSoundfont;
 }
 
 int ProgramSettings::volumeLevel() const

@@ -51,13 +51,13 @@
         <height>130</height>
        </size>
       </property>
-      <property name="baseOctave" stdset="0">
+      <property name="baseOctave">
        <number>3</number>
       </property>
-      <property name="numKeys" stdset="0">
+      <property name="numKeys">
        <number>25</number>
       </property>
-      <property name="keyPressedColor" stdset="0">
+      <property name="keyPressedColor">
        <color>
         <red>255</red>
         <green>0</green>
@@ -72,14 +72,14 @@
        <string>Reverb</string>
       </property>
       <property name="alignment">
-       <set>Qt::AlignCenter</set>
+       <set>Qt::AlignmentFlag::AlignCenter</set>
       </property>
      </widget>
     </item>
     <item row="2" column="1">
      <spacer name="verticalSpacer">
       <property name="orientation">
-       <enum>Qt::Vertical</enum>
+       <enum>Qt::Orientation::Vertical</enum>
       </property>
       <property name="sizeHint" stdset="0">
        <size>
@@ -95,7 +95,7 @@
        <string>Chorus</string>
       </property>
       <property name="alignment">
-       <set>Qt::AlignCenter</set>
+       <set>Qt::AlignmentFlag::AlignCenter</set>
       </property>
      </widget>
     </item>
@@ -187,7 +187,10 @@
       <item row="1" column="0">
        <widget class="QLabel" name="lblDLS">
         <property name="text">
-         <string>Optional DLS File:</string>
+         <string>Optional SoundFont:</string>
+        </property>
+        <property name="textFormat">
+         <enum>Qt::TextFormat::PlainText</enum>
         </property>
        </widget>
       </item>
@@ -205,7 +208,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QLabel" name="lblDLSFile">
+         <widget class="QLabel" name="lblSoundfont">
           <property name="text">
            <string>[empty]</string>
           </property>
@@ -245,7 +248,7 @@
          <string>Audio Output:</string>
         </property>
         <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
         </property>
         <property name="buddy">
          <cstring>combo_Device</cstring>
@@ -280,7 +283,7 @@
          <string>Volume:</string>
         </property>
         <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
         </property>
         <property name="buddy">
          <cstring>volumeSlider</cstring>
@@ -302,7 +305,7 @@
          <number>90</number>
         </property>
         <property name="orientation">
-         <enum>Qt::Horizontal</enum>
+         <enum>Qt::Orientation::Horizontal</enum>
         </property>
        </widget>
       </item>
@@ -318,7 +321,7 @@
          <string>Buffer Time:</string>
         </property>
         <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
         </property>
         <property name="buddy">
          <cstring>spinBuffer</cstring>
@@ -364,7 +367,7 @@
            <string>Octave:</string>
           </property>
           <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
           </property>
          </widget>
         </item>
