@@ -29,24 +29,26 @@ jobs:
       with:
         submodules: true
 
-    - uses: dawidd6/action-download-artifact@v3
+    - uses: dawidd6/action-download-artifact@v11
       with:
         name: ${{env.SONIVOXNAME}}-Linux-x64-r44s16
         github_token: ${{secrets.GH_PAT}}
         repo: pedrolcl/sonivox
         allow_forks: false
-        workflow: cmake-linux.yml
+        workflow: linux-ci.yml
+        branch: devel
 
     - name: Extract downloaded files
       run: tar xvf ${{env.SONIVOXNAME}}.tar
 
-    - uses: dawidd6/action-download-artifact@v3
+    - uses: dawidd6/action-download-artifact@v11
       with:
         name: ${{env.DRUMSTICKNAME}}
         github_token: ${{secrets.GH_PAT}}
         repo: pedrolcl/drumstick
         allow_forks: false
         workflow: cmake.yml
+        branch: devel
 
     - name: Extract downloaded files
       run: tar xvf ${{env.DRUMSTICKNAME}}.tar
@@ -54,7 +56,7 @@ jobs:
     - name: Install Qt
       uses: jurplel/install-qt-action@v3
       with:
-        version: '6.10.*'
+        version: '6.8.*'
         modules: qtmultimedia
 
     - name: Dependencies

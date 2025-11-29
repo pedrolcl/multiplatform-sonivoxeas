@@ -50,25 +50,27 @@ jobs:
       uses: actions/checkout@v4
 
     - name: '${{ matrix.icon }} Download Sonivox'
-      uses: dawidd6/action-download-artifact@v3
+      uses: dawidd6/action-download-artifact@v11
       with:
         name: ${{env.SONIVOX}}-msys2-${{matrix.sys}}
         github_token: ${{secrets.GH_PAT}}
         repo: pedrolcl/sonivox
         allow_forks: false
-        workflow: cmake-win.yml
+        workflow: windows-ci.yml
+        branch: devel
 
     - name: '${{ matrix.icon }} Extract Sonivox'
       run: tar xvf ${{env.SONIVOX}}.tar
 
     - name: '${{ matrix.icon }} Download Drumstick'
-      uses: dawidd6/action-download-artifact@v3
+      uses: dawidd6/action-download-artifact@v11
       with:
         name: ${{env.DRUMSTICK}}-${{matrix.sys}}
         github_token: ${{secrets.GH_PAT}}
         repo: pedrolcl/drumstick
         allow_forks: false
         workflow: cmake-win.yml
+        branch: devel
 
     - name: '${{ matrix.icon }} Extract Drumstick'
       run: tar xvf ${{env.DRUMSTICK}}.tar
