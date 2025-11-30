@@ -27,10 +27,11 @@
 #include <drumstick/backendmanager.h>
 #include <drumstick/rtmidiinput.h>
 
+#include "mp_svoxeas_visibility.h"
 #include "eas.h"
 #include "filewrapper.h"
 
-class SynthRenderer : public QIODevice
+class MP_SVOXEAS_PUBLIC SynthRenderer : public QIODevice
 {
     Q_OBJECT
 

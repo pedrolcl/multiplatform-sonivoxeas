@@ -415,15 +415,13 @@ void
 SynthRenderer::writeMIDIData(QByteArray &ev)
 {
     EAS_RESULT eas_res = EAS_ERROR_ALREADY_STOPPED;
-    EAS_I32 count = ev.size();
-    EAS_U8 buffer[count];
+    const EAS_I32 count = ev.size();
 
     if (m_easData != 0 && m_streamHandle != 0 && !ev.isEmpty())
     {
-        ::memcpy(buffer, ev.data(), ev.size());
         if (count > 0) {
             //qDebug() << Q_FUNC_INFO << QByteArray((char *)&buffer, count).toHex();
-            eas_res = EAS_WriteMIDIStream(m_easData, m_streamHandle, buffer, count);
+            eas_res = EAS_WriteMIDIStream(m_easData, m_streamHandle, reinterpret_cast<EAS_U8*>(ev.data()), count);
             if (eas_res != EAS_SUCCESS) {
                 qWarning() << "EAS_WriteMIDIStream error: " << eas_res;
             }

@@ -29,9 +29,11 @@
 #include <QAudioDevice>
 #include <QMediaDevices>
 #endif
+
+#include "mp_svoxeas_visibility.h"
 #include "synthrenderer.h"
 
-class SynthController : public QObject
+class MP_SVOXEAS_PUBLIC SynthController : public QObject
 {
     Q_OBJECT
 public:

@@ -23,7 +23,9 @@
 #include <QString>
 #include <QSettings>
 
-class ProgramSettings : public QObject
+#include "mp_svoxeas_visibility.h"
+
+class MP_SVOXEAS_PUBLIC ProgramSettings : public QObject
 {
     Q_OBJECT
 
