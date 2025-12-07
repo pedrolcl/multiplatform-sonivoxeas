@@ -7,11 +7,12 @@ set( HEADERS
     programsettings.h
     synthcontroller.h
     synthrenderer.h
+    filewrapper.h
 )
 
 set( SOURCES
     programsettings.cpp
-    synthcontroller.cpp 
+    synthcontroller.cpp
     synthrenderer.cpp
     filewrapper.cpp
 )
@@ -32,12 +33,12 @@ generate_export_header( mp_svoxeas
   INCLUDE_GUARD_NAME   MP_SVOXEAS_VISIBILITY_H
 )
 
-set_target_properties( mp_svoxeas PROPERTIES 
+set_target_properties( mp_svoxeas PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION ${PROJECT_VERSION_MAJOR}
 )
 
-target_link_libraries( mp_svoxeas 
+target_link_libraries( mp_svoxeas
     PUBLIC
         sonivox::sonivox
         Qt${QT_VERSION_MAJOR}::Core
