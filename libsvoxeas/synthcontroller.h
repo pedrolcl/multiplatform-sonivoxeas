@@ -1,6 +1,6 @@
 /*
     Sonivox EAS Synthesizer for Qt applications
-    Copyright (C) 2016-2023, Pedro Lopez-Cabanillas <plcl@users.sf.net>
+    Copyright (C) 2016-2025, Pedro Lopez-Cabanillas <plcl@users.sf.net>
 
     This library is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,7 +21,6 @@
 
 #include <QObject>
 #include <QTimer>
-#include <QScopedPointer>
 #if QT_VERSION < QT_VERSION_CHECK(6,0,0)
 #include <QAudioOutput>
 #else
@@ -48,7 +47,7 @@ public:
     const QAudioDevice &audioDevice() const;
     void setAudioDevice(const QAudioDevice &newAudioDevice);
 #endif
-    QStringList availableAudioDevices() const;
+    QStringList availableAudioDevices();
     QString audioDeviceName() const;
     void setAudioDeviceName(const QString newName);
     void setBufferSize(int milliseconds);
@@ -68,17 +67,17 @@ private:
     void initAudioDevices();
 
 private:
-    QScopedPointer<SynthRenderer> m_renderer;
+    SynthRenderer *m_renderer{nullptr};
     QTimer m_stallDetector;
     int m_requestedBufferTime;
     bool m_running;
     QAudioFormat m_format;
 #if QT_VERSION < QT_VERSION_CHECK(6,0,0)
-    QScopedPointer<QAudioOutput> m_audioOutput;
+    QAudioOutput *m_audioOutput{nullptr};
     QMap<QString,QAudioDeviceInfo> m_availableDevices;
     QAudioDeviceInfo m_audioDevice;
 #else
-    QScopedPointer<QAudioSink> m_audioOutput;
+    QAudioSink *m_audioOutput{nullptr};
     QMap<QString,QAudioDevice> m_availableDevices;
     QAudioDevice m_audioDevice;
 #endif

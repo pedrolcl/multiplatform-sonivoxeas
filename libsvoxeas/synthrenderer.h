@@ -1,6 +1,6 @@
 /*
     Sonivox EAS Synthesizer for Qt applications
-    Copyright (C) 2016-2023, Pedro Lopez-Cabanillas <plcl@users.sf.net>
+    Copyright (C) 2016-2025, Pedro Lopez-Cabanillas <plcl@users.sf.net>
 
     This library is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,7 +21,6 @@
 
 #include <QObject>
 #include <QIODevice>
-#include <QScopedPointer>
 #include <QAudioFormat>
 
 #include <drumstick/backendmanager.h>

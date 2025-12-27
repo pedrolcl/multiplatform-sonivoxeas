@@ -1,6 +1,6 @@
 /*
     Sonivox EAS Synthesizer for Qt applications
-    Copyright (C) 2016-2023, Pedro Lopez-Cabanillas <plcl@users.sf.net>
+    Copyright (C) 2016-2025, Pedro Lopez-Cabanillas <plcl@users.sf.net>
 
     This library is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@ SynthRenderer::initMIDI()
                                     QStringLiteral("MIDI OUT")}};
     m_man.refresh(defaultsMap);
     auto inputs = m_man.availableInputs();
-    qDebug() << Q_FUNC_INFO << inputs;
+    //qDebug() << Q_FUNC_INFO << inputs;
     //qDebug() << Q_FUNC_INFO << ProgramSettings::DEFAULT_MIDI_DRIVER;
     if (m_midiDriver.isEmpty()) {
         setMidiDriver(ProgramSettings::DEFAULT_MIDI_DRIVER);
@@ -111,7 +111,7 @@ SynthRenderer::initEAS()
     m_renderFrames = easConfig->mixBufferSize;
     m_channels = easConfig->numChannels;
     m_sample_size = CHAR_BIT * sizeof (EAS_PCM);
-    qDebug() << Q_FUNC_INFO << "EAS renderFrames=" << m_renderFrames << " sampleRate=" << m_sampleRate << " channels=" << m_channels;
+    //qDebug() << Q_FUNC_INFO << "EAS renderFrames=" << m_renderFrames << " sampleRate=" << m_sampleRate << " channels=" << m_channels;
 
     //QAudioFormat initialization;
     m_format.setSampleRate(m_sampleRate);
@@ -401,7 +401,7 @@ void SynthRenderer::resetLastBufferSize()
 
 void SynthRenderer::reserveBuffer(qsizetype size)
 {
-    qDebug() << Q_FUNC_INFO << size;
+    //qDebug() << Q_FUNC_INFO << size;
     m_audioBuffer.reserve(size);
 }
 

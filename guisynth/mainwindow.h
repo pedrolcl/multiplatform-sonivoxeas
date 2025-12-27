@@ -1,6 +1,6 @@
 /*
     Sonivox EAS Synthesizer for Qt applications
-    Copyright (C) 2016-2023, Pedro Lopez-Cabanillas <plcl@users.sf.net>
+    Copyright (C) 2016-2025, Pedro Lopez-Cabanillas <plcl@users.sf.net>
 
     This library is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,7 +19,6 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QScopedPointer>
 #include <QMainWindow>
 #include <QFileInfo>
 #include "synthcontroller.h"
@@ -80,7 +79,7 @@ private slots:
     
 private:
     Ui::MainWindow *m_ui;
-    QScopedPointer<SynthController> m_synth;
+    SynthController *m_synth;
     QString m_songFile;
     QString m_Soundfont;
     PlayerState m_state;

@@ -1,6 +1,6 @@
 /*
     Sonivox EAS Synthesizer for Qt applications
-    Copyright (C) 2016-2023, Pedro Lopez-Cabanillas <plcl@users.sf.net>
+    Copyright (C) 2016-2025, Pedro Lopez-Cabanillas <plcl@users.sf.net>
 
     This library is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     m_ui->setupUi(this);
 
-    m_synth.reset(new SynthController(ProgramSettings::instance()->bufferTime()));
+    m_synth = new SynthController(ProgramSettings::instance()->bufferTime(), this);
     m_synth->renderer()->setMidiDriver(ProgramSettings::instance()->midiDriver());
     m_synth->renderer()->subscribe(ProgramSettings::instance()->portName());
 
@@ -69,9 +69,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_synth->renderer(), SIGNAL(midiNoteOn(int,int)), this, SLOT(showNoteOn(int,int)));
     connect(m_synth->renderer(), SIGNAL(midiNoteOff(int,int)), this, SLOT(showNoteOff(int,int)));
     connect(m_synth->renderer(), SIGNAL(playbackStopped()), this, SLOT(songStopped()));
-    connect(m_synth.get(), &SynthController::underrunDetected, this, &MainWindow::underrunMessage);
-    connect(m_synth.get(), &SynthController::stallDetected, this, &MainWindow::stallMessage);
-    
+    connect(m_synth, &SynthController::underrunDetected, this, &MainWindow::underrunMessage);
+    connect(m_synth, &SynthController::stallDetected, this, &MainWindow::stallMessage);
+
     m_songFile = QString();
     updateState(EmptyState);
     initialize();
