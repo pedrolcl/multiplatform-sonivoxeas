@@ -64,7 +64,7 @@ signals:
 
 private:
     void initAudio();
-    void initAudioDevices();
+    void updateAudioDevices();
 
 private:
     SynthRenderer *m_renderer{nullptr};
@@ -80,6 +80,7 @@ private:
     QAudioSink *m_audioOutput{nullptr};
     QMap<QString,QAudioDevice> m_availableDevices;
     QAudioDevice m_audioDevice;
+    QMediaDevices *m_devices;
 #endif
 };
 

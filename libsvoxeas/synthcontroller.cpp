@@ -25,10 +25,19 @@ SynthController::SynthController(int bufTime, QObject *parent)
     , m_renderer(new SynthRenderer())
     , m_requestedBufferTime(bufTime)
     , m_running(false)
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    , m_devices(new QMediaDevices(this))
+#endif
 {
-    qDebug() << Q_FUNC_INFO;
     m_format = m_renderer->format();
-    initAudioDevices();
+    qDebug() << Q_FUNC_INFO << m_format;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    connect(m_devices,
+            &QMediaDevices::audioOutputsChanged,
+            this,
+            &SynthController::updateAudioDevices);
+#endif
+    updateAudioDevices();
     initAudio();
     connect(&m_stallDetector, &QTimer::timeout, this, [=]{
         if (m_running) {
@@ -120,25 +129,24 @@ SynthController::initAudio()
     }
 }
 
-void
-SynthController::initAudioDevices()
+void SynthController::updateAudioDevices()
 {
+    m_availableDevices.clear();
 #if QT_VERSION < QT_VERSION_CHECK(6,0,0)
-    auto devices = QAudioDeviceInfo::availableDevices(QAudio::AudioOutput);
+    const auto devices = QAudioDeviceInfo::availableDevices(QAudio::AudioOutput);
     m_audioDevice = QAudioDeviceInfo::defaultOutputDevice();
     foreach(auto &dev, devices) {
+        qDebug() << Q_FUNC_INFO << dev.deviceName() << dev.isFormatSupported(m_format);
         if (dev.isFormatSupported(m_format)) {
-            //qDebug() << Q_FUNC_INFO << dev.deviceName();
             m_availableDevices.insert(dev.deviceName(), dev);
         }
     }
 #else
-    QMediaDevices mediaDevices;
-    auto devices = mediaDevices.audioOutputs();
-    m_audioDevice = mediaDevices.defaultAudioOutput();
+    const auto devices = m_devices->audioOutputs();
+    m_audioDevice = m_devices->defaultAudioOutput();
     foreach(auto &dev, devices) {
+        qDebug() << Q_FUNC_INFO << dev.description() << dev.isFormatSupported(m_format);
         if (dev.isFormatSupported(m_format)) {
-            //qDebug() << Q_FUNC_INFO << dev.description();
             m_availableDevices.insert(dev.description(), dev);
         }
     }
@@ -179,8 +187,6 @@ SynthController::setAudioDevice(const QAudioDevice &newAudioDevice)
 QStringList SynthController::availableAudioDevices()
 {
     qDebug() << Q_FUNC_INFO;
-    m_availableDevices.clear();
-    initAudioDevices();
     return m_availableDevices.keys();
 }
 
@@ -223,5 +229,7 @@ void SynthController::setVolume(int volume)
     qreal linearVolume = QAudio::convertVolume(volume / 100.0,
                                                QAudio::LogarithmicVolumeScale,
                                                QAudio::LinearVolumeScale);
-    m_audioOutput->setVolume(linearVolume);
+    if (m_audioOutput) {
+        m_audioOutput->setVolume(linearVolume);
+    }
 }
