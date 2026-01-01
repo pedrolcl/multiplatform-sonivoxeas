@@ -20,7 +20,7 @@
 #include <QString>
 #include <QCoreApplication>
 #include <QTextStream>
-#include <QDebug>
+//#include <QDebug>
 
 #include <eas_reverb.h>
 #include <eas_chorus.h>
@@ -226,8 +226,10 @@ SynthRenderer::stopped()
 void
 SynthRenderer::start()
 {
+    Q_ASSERT_X(!isOpen(), Q_FUNC_INFO, "renderer already open");
     m_isPlaying = false;
-    open(QIODevice::ReadOnly | QIODevice::Unbuffered);
+    /*bool ok =*/ open(QIODevice::ReadOnly | QIODevice::Unbuffered);
+    // qDebug() << Q_FUNC_INFO << "opened:" << ok;
     if (m_files.length() > 0) {
         preparePlayback();
     }
@@ -236,7 +238,7 @@ SynthRenderer::start()
 void
 SynthRenderer::stop()
 {
-    //qDebug() << Q_FUNC_INFO;
+    Q_ASSERT_X(isOpen(), Q_FUNC_INFO, "renderer not open");
     if (isOpen()) {
         close();
     }

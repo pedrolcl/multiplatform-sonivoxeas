@@ -38,6 +38,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_synth->renderer()->subscribe(ProgramSettings::instance()->portName());
 
     m_ui->combo_Device->addItems(m_synth->availableAudioDevices());
+    m_ui->combo_Device->setCurrentText(m_synth->audioDeviceName());
     m_ui->combo_MIDI->addItems(m_synth->renderer()->connections());
     m_ui->combo_Reverb->addItem(QStringLiteral("Large Hall"), 0);
     m_ui->combo_Reverb->addItem(QStringLiteral("Hall"), 1);
@@ -110,7 +111,7 @@ MainWindow::initialize()
     m_ui->pianoKeybd->setFont(f);
     m_ui->pianoKeybd->setShowLabels(drumstick::widgets::LabelVisibility::ShowMinimum);
     m_ui->pianoKeybd->setNumKeys(25, 0);
-    m_synth->start();
+    //m_synth->start();
 }
 
 void
@@ -167,9 +168,10 @@ MainWindow::chorusChanged(int value)
 
 void MainWindow::deviceChanged(int value)
 {
-    //qDebug() << Q_FUNC_INFO << value;
-    m_synth->setAudioDeviceName(m_ui->combo_Device->itemText(value));
-    ProgramSettings::instance()->setAudioDeviceName(m_ui->combo_Device->itemText(value));
+    auto newDevice = m_ui->combo_Device->itemText(value);
+    //qDebug() << Q_FUNC_INFO << newDevice;
+    m_synth->setAudioDeviceName(newDevice);
+    ProgramSettings::instance()->setAudioDeviceName(newDevice);
 }
 
 void MainWindow::subscriptionChanged(int value)
