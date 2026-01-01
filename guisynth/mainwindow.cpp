@@ -34,12 +34,12 @@ MainWindow::MainWindow(QWidget *parent) :
     m_ui->setupUi(this);
 
     m_synth = new SynthController(ProgramSettings::instance()->bufferTime(), this);
-    m_synth->renderer()->setMidiDriver(ProgramSettings::instance()->midiDriver());
-    m_synth->renderer()->subscribe(ProgramSettings::instance()->portName());
+    m_synth->setMidiDriver(ProgramSettings::instance()->midiDriver());
+    m_synth->subscribe(ProgramSettings::instance()->portName());
 
     m_ui->combo_Device->addItems(m_synth->availableAudioDevices());
     m_ui->combo_Device->setCurrentText(m_synth->audioDeviceName());
-    m_ui->combo_MIDI->addItems(m_synth->renderer()->connections());
+    m_ui->combo_MIDI->addItems(m_synth->connections());
     m_ui->combo_Reverb->addItem(QStringLiteral("Large Hall"), 0);
     m_ui->combo_Reverb->addItem(QStringLiteral("Hall"), 1);
     m_ui->combo_Reverb->addItem(QStringLiteral("Chamber"), 2);
@@ -67,9 +67,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_ui->stopButton, &QToolButton::clicked, this, &MainWindow::stopSong);
     connect(m_ui->pianoKeybd, SIGNAL(noteOn(int,int)), this, SLOT(noteOn(int,int)));
     connect(m_ui->pianoKeybd, SIGNAL(noteOff(int,int)), this, SLOT(noteOff(int,int)));
-    connect(m_synth->renderer(), SIGNAL(midiNoteOn(int,int)), this, SLOT(showNoteOn(int,int)));
-    connect(m_synth->renderer(), SIGNAL(midiNoteOff(int,int)), this, SLOT(showNoteOff(int,int)));
-    connect(m_synth->renderer(), SIGNAL(playbackStopped()), this, SLOT(songStopped()));
+    connect(m_synth, SIGNAL(midiNoteOn(int, int)), this, SLOT(showNoteOn(int, int)));
+    connect(m_synth, SIGNAL(midiNoteOff(int, int)), this, SLOT(showNoteOff(int, int)));
+    connect(m_synth, SIGNAL(playbackStopped()), this, SLOT(songStopped()));
     connect(m_synth, &SynthController::underrunDetected, this, &MainWindow::underrunMessage);
     connect(m_synth, &SynthController::stallDetected, this, &MainWindow::stallMessage);
 
@@ -104,7 +104,7 @@ MainWindow::initialize()
         m_ui->lblSoundfont->setText("[empty]");
         m_soundFont.clear();
         ProgramSettings::instance()->setSoundfont(m_soundFont);
-        m_synth->renderer()->initSoundfont(m_soundFont);
+        m_synth->initSoundfont(m_soundFont);
     }
     QFont f = QApplication::font();
     f.setPointSize(72);
@@ -132,7 +132,7 @@ void
 MainWindow::reverbTypeChanged(int index)
 {
     int value = m_ui->combo_Reverb->itemData(index).toInt();
-    m_synth->renderer()->initReverb(value);
+    m_synth->initReverb(value);
     ProgramSettings::instance()->setReverbType(value);
     if (value < 0) {
         m_ui->dial_Reverb->setValue(0);
@@ -143,7 +143,7 @@ MainWindow::reverbTypeChanged(int index)
 void
 MainWindow::reverbChanged(int value)
 {
-    m_synth->renderer()->setReverbWet(value);
+    m_synth->setReverbWet(value);
     ProgramSettings::instance()->setReverbWet(value);
 }
 
@@ -151,7 +151,7 @@ void
 MainWindow::chorusTypeChanged(int index)
 {
     int value = m_ui->combo_Chorus->itemData(index).toInt();
-    m_synth->renderer()->initChorus(value);
+    m_synth->initChorus(value);
     ProgramSettings::instance()->setChorusType(value);
     if (value < 0) {
         m_ui->dial_Chorus->setValue(0);
@@ -162,7 +162,7 @@ MainWindow::chorusTypeChanged(int index)
 void
 MainWindow::chorusChanged(int value)
 {
-    m_synth->renderer()->setChorusLevel(value);
+    m_synth->setChorusLevel(value);
     ProgramSettings::instance()->setChorusLevel(value);
 }
 
@@ -178,7 +178,7 @@ void MainWindow::subscriptionChanged(int value)
 {
     QString portName = m_ui->combo_MIDI->itemText(value);
     //qDebug() << Q_FUNC_INFO << value << portName;
-    m_synth->renderer()->subscribe(portName);
+    m_synth->subscribe(portName);
     ProgramSettings::instance()->setPortName(portName);
 }
 
@@ -217,7 +217,7 @@ MainWindow::readMIDIFile(const QString &file)
 
 void MainWindow::listPorts()
 {
-    auto avail = m_synth->renderer()->connections();
+    auto avail = m_synth->connections();
     fputs("Available MIDI Ports:\n", stdout);
     foreach(const auto &p, avail) {
         if (!p.isEmpty()) {
@@ -250,7 +250,7 @@ void MainWindow::readSoundfont(const QFileInfo &file)
     if (file.exists() && file.isReadable()) {
         m_soundFont = file.absoluteFilePath();
         m_ui->lblSoundfont->setText(file.fileName());
-        m_synth->renderer()->initSoundfont(m_soundFont);
+        m_synth->initSoundfont(m_soundFont);
         ProgramSettings::instance()->setSoundfont(m_soundFont);
     }
 }
@@ -265,7 +265,7 @@ void MainWindow::openSoundfont()
         m_soundFont.clear();
         m_ui->lblSoundfont->setText("[empty]");
         ProgramSettings::instance()->setSoundfont(m_soundFont);
-        m_synth->renderer()->initSoundfont(m_soundFont);
+        m_synth->initSoundfont(m_soundFont);
     } else {
         QFileInfo fInfo(fileName);
         readSoundfont(fInfo);
@@ -277,7 +277,7 @@ void
 MainWindow::playSong()
 {
     if (m_state == StoppedState) {
-        m_synth->renderer()->startPlayback(m_songFile);
+        m_synth->startPlayback(m_songFile);
         updateState(PlayingState);
     }
 }
@@ -286,7 +286,7 @@ void
 MainWindow::stopSong()
 {
     if (m_state == PlayingState) {
-        m_synth->renderer()->stopPlayback();
+        m_synth->stopPlayback();
         updateState(StoppedState);
     }
 }
@@ -350,12 +350,12 @@ void MainWindow::stallMessage()
 
 void MainWindow::noteOn(int midiNote, int vel)
 {
-    m_synth->renderer()->noteOn(0, midiNote, vel);
+    m_synth->noteOn(0, midiNote, vel);
 }
 
 void MainWindow::noteOff(int midiNote, int vel)
 {
-    m_synth->renderer()->noteOff(0, midiNote, vel);
+    m_synth->noteOff(0, midiNote, vel);
 }
 
 void MainWindow::showNoteOn(int midiNote, int vel)

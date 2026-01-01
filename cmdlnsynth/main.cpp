@@ -145,9 +145,9 @@ int main(int argc, char *argv[])
         }
     }
     synth.reset(new SynthController(ProgramSettings::instance()->bufferTime()));
-    synth->renderer()->setMidiDriver(ProgramSettings::instance()->midiDriver());
+    synth->setMidiDriver(ProgramSettings::instance()->midiDriver());
     if (parser.isSet(listOption)) {
-        auto avail = synth->renderer()->connections();
+        auto avail = synth->connections();
         fputs("Available MIDI Ports:\n", stdout);
         foreach(const auto &p, avail) {
             if (!p.isEmpty()) {
@@ -165,12 +165,12 @@ int main(int argc, char *argv[])
         }
         return EXIT_SUCCESS;
     }
-    synth->renderer()->subscribe(ProgramSettings::instance()->portName());
-    synth->renderer()->setReverbWet(ProgramSettings::instance()->reverbWet());
-    synth->renderer()->initReverb(ProgramSettings::instance()->reverbType());
-    synth->renderer()->setChorusLevel(ProgramSettings::instance()->chorusLevel());
-    synth->renderer()->initChorus(ProgramSettings::instance()->chorusType());
-    synth->renderer()->initSoundfont(ProgramSettings::instance()->Soundfont());
+    synth->subscribe(ProgramSettings::instance()->portName());
+    synth->setReverbWet(ProgramSettings::instance()->reverbWet());
+    synth->initReverb(ProgramSettings::instance()->reverbType());
+    synth->setChorusLevel(ProgramSettings::instance()->chorusLevel());
+    synth->initChorus(ProgramSettings::instance()->chorusType());
+    synth->initSoundfont(ProgramSettings::instance()->Soundfont());
     synth->setAudioDeviceName(ProgramSettings::instance()->audioDeviceName());
     QObject::connect(synth.get(), &SynthController::underrunDetected, &app, []{
         fputs("Underrun error detected. Please increase the audio buffer size.\n", stderr);
@@ -181,14 +181,14 @@ int main(int argc, char *argv[])
         qApp->quit();
     });
     QObject::connect(&app, &QCoreApplication::aboutToQuit, ProgramSettings::instance(), &ProgramSettings::SaveToNativeStorage);
-    QObject::connect(synth->renderer(), SIGNAL(playbackStopped()), synth.get(), SLOT(stop()));
-	QObject::connect(synth->renderer(), SIGNAL(playbackStopped()), &app, SLOT(quit()));
+    QObject::connect(synth.get(), SIGNAL(playbackStopped()), synth.get(), SLOT(stop()));
+    QObject::connect(synth.get(), SIGNAL(playbackStopped()), &app, SLOT(quit()));
     QStringList args = parser.positionalArguments();
     if (!args.isEmpty()) {
         for(int i = 0; i < args.length();  ++i) {
             QFileInfo argFile(args[i]);
             if (argFile.exists()) {
-                synth->renderer()->playFile(argFile.filePath());
+                synth->playFile(argFile.filePath());
             }
         }
     }

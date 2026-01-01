@@ -38,7 +38,6 @@ class MP_SVOXEAS_PUBLIC SynthController : public QObject
 public:
     explicit SynthController(int bufTime, QObject *parent = 0);
     virtual ~SynthController();
-    SynthRenderer *renderer() const;
 
 #if QT_VERSION < QT_VERSION_CHECK(6,0,0)
     const QAudioDeviceInfo &audioDevice() const;
@@ -54,7 +53,24 @@ public:
     void setVolume(int volume);
     void restart();
 
+    const QString midiDriver() const;
+    void setMidiDriver(const QString newMidiDriver);
+    QStringList connections() const;
+    QString subscription() const;
+    void subscribe(const QString &portName);
+
+    void initReverb(int reverb_type);
+    void initChorus(int chorus_type);
+    void setReverbWet(int amount);
+    void setChorusLevel(int amount);
+    void initSoundfont(const QString soundfont);
+    void playFile(const QString fileName);
+    void startPlayback(const QString fileName);
+    void stopPlayback();
+
 public slots:
+    void noteOn(int chan, int note, int vel);
+    void noteOff(int chan, int note, int vel);
     void start();
     void stop();
 
@@ -62,10 +78,15 @@ signals:
     void finished();
     void underrunDetected();
     void stallDetected();
+    void midiNoteOn(const int note, const int vel);
+    void midiNoteOff(const int note, const int vel);
+    void playbackStopped();
+    void playbackTime(int time);
 
 private:
     void initAudio();
     void updateAudioDevices();
+    void connectRendererSignals();
 
 private:
     SynthRenderer *m_renderer{nullptr};
@@ -83,6 +104,8 @@ private:
     QAudioDevice m_audioDevice;
     QMediaDevices *m_devices;
 #endif
+    QString m_midiDriver;
+    QString m_portName;
 };
 
 #endif // SYNTHCONTROLLER_H

@@ -54,7 +54,7 @@ SynthRenderer::initMIDI()
     m_man.refresh(defaultsMap);
     auto inputs = m_man.availableInputs();
     //qDebug() << Q_FUNC_INFO << inputs;
-    //qDebug() << Q_FUNC_INFO << ProgramSettings::DEFAULT_MIDI_DRIVER;
+    // qDebug() << Q_FUNC_INFO << ProgramSettings::DEFAULT_MIDI_DRIVER;
     if (m_midiDriver.isEmpty()) {
         setMidiDriver(ProgramSettings::DEFAULT_MIDI_DRIVER);
     }
@@ -248,7 +248,7 @@ SynthRenderer::stop()
 QStringList 
 SynthRenderer::connections() const
 {
-    Q_ASSERT(m_input != nullptr);
+    Q_ASSERT_X(m_input != nullptr, Q_FUNC_INFO, "MIDI input is null");
     QStringList result;
     auto avail = m_input->connections(true);
     foreach(const auto &c, avail) {
@@ -268,7 +268,7 @@ SynthRenderer::subscription() const
 void
 SynthRenderer::subscribe(const QString& portName)
 {
-    //qDebug() << Q_FUNC_INFO << newPort;
+    // qDebug() << Q_FUNC_INFO << portName;
     Q_ASSERT(m_input != nullptr);
     if (m_portName != portName || portName.isEmpty()) {
         auto avail = m_input->connections(true);
@@ -320,7 +320,7 @@ SynthRenderer::setMidiDriver(const QString newMidiDriver)
 void 
 SynthRenderer::noteOn(int chan, int note, int vel) 
 {
-    //qDebug() << Q_FUNC_INFO << chan << note << vel;
+    // qDebug() << Q_FUNC_INFO << chan << note << vel;
     QByteArray ev(3, 0);
     ev[0] = MIDI_STATUS_NOTEON | chan;
     ev[1] = 0xff & note;

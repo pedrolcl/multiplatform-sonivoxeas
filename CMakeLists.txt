@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.21)
 project( multiplatform_sonivoxeas
-         VERSION 2.1.1
+         VERSION 2.2.0
          DESCRIPTION "Multiplatform Sonivox EAS for Qt" )
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -19,6 +19,9 @@ if (USE_QT5)
     find_package(QT NAMES Qt5 REQUIRED)
 else()
     find_package(QT NAMES Qt6 REQUIRED)
+endif()
+if (QT_FOUND)
+    message(STATUS "Qt v${QT_VERSION} found")
 endif()
 
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Core Gui Widgets Multimedia REQUIRED)

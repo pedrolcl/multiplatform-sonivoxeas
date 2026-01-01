@@ -47,6 +47,7 @@ SynthController::SynthController(int bufTime, QObject *parent)
             m_renderer->resetLastBufferSize();
         }
     });
+    connectRendererSignals();
 }
 
 SynthController::~SynthController()
@@ -58,18 +59,22 @@ SynthController::~SynthController()
         delete m_renderer;
         m_renderer = nullptr;
     }
-    //qDebug() << Q_FUNC_INFO;
+    // qDebug() << Q_FUNC_INFO;
 }
 
 void
 SynthController::start()
 {
+    qDebug() << Q_FUNC_INFO;
     auto bufferBytes = m_format.bytesForDuration(m_requestedBufferTime * 1000);
     // qDebug() << Q_FUNC_INFO
     //          << "Requested buffer size:" << bufferBytes << "bytes,"
     //          << m_requestedBufferTime << "milliseconds";
     if (!m_renderer) {
         m_renderer = new SynthRenderer();
+        connectRendererSignals();
+        setMidiDriver(m_midiDriver);
+        subscribe(m_portName);
     }
     if (m_renderer) {
         m_renderer->reserveBuffer(bufferBytes * 2);
@@ -94,7 +99,7 @@ SynthController::start()
 void
 SynthController::stop()
 {
-    // qDebug() << Q_FUNC_INFO;
+    qDebug() << Q_FUNC_INFO;
     m_running = false;
     m_stallDetector.stop();
     if (m_audioOutput) {
@@ -107,12 +112,6 @@ SynthController::stop()
     }
     delete m_renderer;
     m_renderer = nullptr;
-}
-
-SynthRenderer*
-SynthController::renderer() const
-{
-    return m_renderer;
 }
 
 void
@@ -164,6 +163,19 @@ void SynthController::updateAudioDevices()
     }
 #endif
    // qDebug() << Q_FUNC_INFO << "current audio device:" << m_audioDevice.description();
+}
+
+void SynthController::connectRendererSignals()
+{
+    if (m_renderer) {
+        connect(m_renderer, &SynthRenderer::midiNoteOn, this, &SynthController::midiNoteOn);
+        connect(m_renderer, &SynthRenderer::midiNoteOff, this, &SynthController::midiNoteOff);
+        connect(m_renderer, &SynthRenderer::playbackTime, this, &SynthController::playbackTime);
+        connect(m_renderer,
+                &SynthRenderer::playbackStopped,
+                this,
+                &SynthController::playbackStopped);
+    }
 }
 
 #if QT_VERSION < QT_VERSION_CHECK(6,0,0)
@@ -254,4 +266,116 @@ void SynthController::restart()
 {
     stop();
     start();
+}
+
+const QString SynthController::midiDriver() const
+{
+    if (m_renderer) {
+        return m_renderer->midiDriver();
+    }
+    return QString();
+}
+
+void SynthController::setMidiDriver(const QString newMidiDriver)
+{
+    //qDebug() << Q_FUNC_INFO << newMidiDriver;
+    if (m_renderer && !newMidiDriver.isEmpty()) {
+        m_renderer->setMidiDriver(newMidiDriver);
+        m_midiDriver = newMidiDriver;
+    }
+}
+
+QStringList SynthController::connections() const
+{
+    if (m_renderer) {
+        return m_renderer->connections();
+    }
+    return QStringList();
+}
+
+QString SynthController::subscription() const
+{
+    if (m_renderer) {
+        return m_renderer->subscription();
+    }
+    return QString();
+}
+
+void SynthController::subscribe(const QString &portName)
+{
+    //qDebug() << Q_FUNC_INFO << portName;
+    if (m_renderer && !portName.isEmpty()) {
+        m_renderer->subscribe(portName);
+        m_portName = portName;
+    }
+}
+
+void SynthController::initReverb(int reverb_type)
+{
+    if (m_renderer) {
+        m_renderer->initReverb(reverb_type);
+    }
+}
+
+void SynthController::initChorus(int chorus_type)
+{
+    if (m_renderer) {
+        m_renderer->initChorus(chorus_type);
+    }
+}
+
+void SynthController::setReverbWet(int amount)
+{
+    if (m_renderer) {
+        m_renderer->setReverbWet(amount);
+    }
+}
+
+void SynthController::setChorusLevel(int amount)
+{
+    if (m_renderer) {
+        m_renderer->setChorusLevel(amount);
+    }
+}
+
+void SynthController::initSoundfont(const QString soundfont)
+{
+    if (m_renderer) {
+        m_renderer->initSoundfont(soundfont);
+    }
+}
+
+void SynthController::playFile(const QString fileName)
+{
+    if (m_renderer) {
+        m_renderer->playFile(fileName);
+    }
+}
+
+void SynthController::startPlayback(const QString fileName)
+{
+    if (m_renderer) {
+        m_renderer->startPlayback(fileName);
+    }
+}
+
+void SynthController::stopPlayback()
+{
+    if (m_renderer) {
+        m_renderer->stopPlayback();
+    }
+}
+
+void SynthController::noteOn(int chan, int note, int vel)
+{
+    if (m_renderer) {
+        m_renderer->noteOn(chan, note, vel);
+    }
+}
+
+void SynthController::noteOff(int chan, int note, int vel)
+{
+    if (m_renderer) {
+        m_renderer->noteOff(chan, note, vel);
+    }
 }
