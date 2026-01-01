@@ -102,16 +102,16 @@ MainWindow::initialize()
         readSoundfont(dlsInfo);
     } else {
         m_ui->lblSoundfont->setText("[empty]");
-        m_Soundfont.clear();
-        ProgramSettings::instance()->setSoundfont(m_Soundfont);
-        m_synth->renderer()->initSoundfont(m_Soundfont);
+        m_soundFont.clear();
+        ProgramSettings::instance()->setSoundfont(m_soundFont);
+        m_synth->renderer()->initSoundfont(m_soundFont);
     }
     QFont f = QApplication::font();
     f.setPointSize(72);
     m_ui->pianoKeybd->setFont(f);
     m_ui->pianoKeybd->setShowLabels(drumstick::widgets::LabelVisibility::ShowMinimum);
     m_ui->pianoKeybd->setNumKeys(25, 0);
-    //m_synth->start();
+    m_synth->restart();
 }
 
 void
@@ -248,10 +248,10 @@ MainWindow::openMIDIFile()
 void MainWindow::readSoundfont(const QFileInfo &file)
 {
     if (file.exists() && file.isReadable()) {
-        m_Soundfont = file.absoluteFilePath();
+        m_soundFont = file.absoluteFilePath();
         m_ui->lblSoundfont->setText(file.fileName());
-        m_synth->renderer()->initSoundfont(m_Soundfont);
-        ProgramSettings::instance()->setSoundfont(m_Soundfont);
+        m_synth->renderer()->initSoundfont(m_soundFont);
+        ProgramSettings::instance()->setSoundfont(m_soundFont);
     }
 }
 
@@ -261,17 +261,16 @@ void MainWindow::openSoundfont()
                                                     tr("Open DLS file"),
                                                     QString(),
                                                     tr("Soundfonts (*.dls *.sf2)"));
-    m_synth->stop();
     if (fileName.isEmpty()) {
-        m_Soundfont.clear();
+        m_soundFont.clear();
         m_ui->lblSoundfont->setText("[empty]");
-        ProgramSettings::instance()->setSoundfont(m_Soundfont);
-        m_synth->renderer()->initSoundfont(m_Soundfont);
+        ProgramSettings::instance()->setSoundfont(m_soundFont);
+        m_synth->renderer()->initSoundfont(m_soundFont);
     } else {
         QFileInfo fInfo(fileName);
         readSoundfont(fInfo);
     }
-    m_synth->start();
+    m_synth->restart();
 }
 
 void

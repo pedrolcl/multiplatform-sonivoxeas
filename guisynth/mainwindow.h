@@ -81,7 +81,7 @@ private:
     Ui::MainWindow *m_ui;
     SynthController *m_synth;
     QString m_songFile;
-    QString m_Soundfont;
+    QString m_soundFont;
     PlayerState m_state;
 };
 

@@ -52,6 +52,7 @@ public:
     void setAudioDeviceName(const QString newName);
     void setBufferSize(int milliseconds);
     void setVolume(int volume);
+    void restart();
 
 public slots:
     void start();

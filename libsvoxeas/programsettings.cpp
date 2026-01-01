@@ -16,7 +16,7 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <QDebug>
+//#include <QDebug>
 #include "programsettings.h"
 
 const QString ProgramSettings::DEFAULT_MIDI_DRIVER =

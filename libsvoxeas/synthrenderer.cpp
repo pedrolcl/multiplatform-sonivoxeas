@@ -20,7 +20,7 @@
 #include <QString>
 #include <QCoreApplication>
 #include <QTextStream>
-//#include <QDebug>
+#include <QDebug>
 
 #include <eas_reverb.h>
 #include <eas_chorus.h>
@@ -36,7 +36,8 @@ SynthRenderer::SynthRenderer(QObject *parent):
     m_isPlaying(false),
     m_input(nullptr),
     m_currentFile(nullptr),
-    m_lastBufferSize(0)
+    m_lastBufferSize(0),
+    m_soundfont("")
 {
     //qDebug() << Q_FUNC_INFO;
     initMIDI();
@@ -83,17 +84,17 @@ SynthRenderer::initEAS()
       return;
     }
 
-    if (!m_Soundfont.isEmpty()) {
-        FileWrapper Soundfont(m_Soundfont);
+    if (!m_soundfont.isEmpty()) {
+        FileWrapper Soundfont(m_soundfont);
         if (Soundfont.ok()) {
             eas_res = EAS_LoadDLSCollection(dataHandle, nullptr, Soundfont.getLocator());
             if (eas_res != EAS_SUCCESS) {
                 qWarning() << QString("EAS_LoadDLSCollection(%1) error: %2")
-                                  .arg(m_Soundfont)
+                                  .arg(m_soundfont)
                                   .arg(eas_res);
             }
         } else {
-            qWarning() << "Failed to open" << m_Soundfont;
+            qWarning() << "Failed to open" << m_soundfont;
         }
     }
 
@@ -247,13 +248,13 @@ SynthRenderer::stop()
 QStringList 
 SynthRenderer::connections() const
 {
-    //qDebug() << Q_FUNC_INFO;
     Q_ASSERT(m_input != nullptr);
     QStringList result;
     auto avail = m_input->connections(true);
     foreach(const auto &c, avail) {
         result << c.first;
     }
+    // qDebug() << Q_FUNC_INFO << result;
     return result;
 }
 
@@ -489,10 +490,10 @@ SynthRenderer::setChorusLevel(int amount)
     }
 }
 
-void SynthRenderer::initSoundfont(const QString &Soundfont)
+void SynthRenderer::initSoundfont(const QString soundfont)
 {
-    if (m_Soundfont != Soundfont) {
-        m_Soundfont = Soundfont;
+    if (m_soundfont != soundfont) {
+        m_soundfont = soundfont;
         uninitEAS();
         initEAS();
     }

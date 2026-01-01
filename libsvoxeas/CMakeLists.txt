@@ -19,6 +19,10 @@ set( SOURCES
 
 add_library( mp_svoxeas ${HEADERS} ${SOURCES} )
 
+if (WIN32)
+    target_compile_definitions( mp_svoxeas PRIVATE _CRT_SECURE_NO_WARNINGS )
+endif()
+
 if (BUILD_SHARED_LIBS)
     target_compile_definitions( mp_svoxeas PRIVATE mp_svoxeas_EXPORTS )
 else()

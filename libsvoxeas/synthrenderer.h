@@ -59,7 +59,7 @@ public:
     void initChorus(int chorus_type);
     void setReverbWet(int amount);
     void setChorusLevel(int amount);
-    void initSoundfont(const QString &Soundfont);
+    void initSoundfont(const QString soundfont);
     void playFile(const QString fileName);
     void startPlayback(const QString fileName);
     void stopPlayback();
@@ -113,7 +113,7 @@ private:
     EAS_HANDLE m_fileHandle;
     FileWrapper *m_currentFile;
     QStringList m_files;
-    QString m_Soundfont;
+    QString m_soundfont;
 
     // Qt Multimedia
     QAudioFormat m_format;

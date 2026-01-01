@@ -224,6 +224,8 @@ SynthController::setAudioDeviceName(const QString newName)
         stop();
         m_audioDevice = m_availableDevices.value(newName);
         start();
+    } else {
+        restart();
     }
 }
 
@@ -246,4 +248,10 @@ void SynthController::setVolume(int volume)
     if (m_audioOutput) {
         m_audioOutput->setVolume(linearVolume);
     }
+}
+
+void SynthController::restart()
+{
+    stop();
+    start();
 }
