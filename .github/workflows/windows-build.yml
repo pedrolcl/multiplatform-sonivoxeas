@@ -54,7 +54,7 @@ jobs:
       with:
         name: ${{env.SONIVOX}}-msys2-${{matrix.sys}}
         github_token: ${{secrets.GH_PAT}}
-        repo: pedrolcl/sonivox
+        repo: EmbeddedSynth/sonivox
         allow_forks: false
         workflow: win-msys2.yml
         branch: devel
