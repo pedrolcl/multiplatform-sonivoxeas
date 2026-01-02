@@ -63,7 +63,17 @@ target_compile_definitions( mp_svoxeas PRIVATE
 )
 
 install( TARGETS mp_svoxeas
-         DESTINATION ${CMAKE_INSTALL_LIBDIR} )
+         RUNTIME_DEPENDENCY_SET sonivoxeas-dependencies
+         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+                 COMPONENT sonivoxeas_runtime
+         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                 COMPONENT sonivoxeas_development
+         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                 COMPONENT sonivoxeas_runtime
+                 NAMELINK_COMPONENT sonivox_development
+        )
 
 install ( FILES ${HEADERS}
-          DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} )
+          DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/sonivoxeas
+          COMPONENT sonivoxeas_development
+        )

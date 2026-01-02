@@ -28,7 +28,10 @@ target_compile_definitions( mp_guisynth PRIVATE
 )
 
 install( TARGETS mp_guisynth
-         DESTINATION ${CMAKE_INSTALL_BINDIR} )
+         DESTINATION ${CMAKE_INSTALL_BINDIR}
+         COMPONENT sonivoxeas_application
+         RUNTIME_DEPENDENCY_SET sonivoxeas-dependencies
+)
 
 install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/icon.png
          DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/128x128/apps

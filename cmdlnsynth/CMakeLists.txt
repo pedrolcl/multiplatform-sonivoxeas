@@ -11,5 +11,8 @@ target_compile_definitions( mp_cmdlnsynth PRIVATE
     $<$<CONFIG:RELEASE>:QT_NO_DEBUG_OUTPUT>
 )
 
-install( TARGETS mp_cmdlnsynth 
-         DESTINATION ${CMAKE_INSTALL_BINDIR} )
+install ( TARGETS mp_cmdlnsynth
+            DESTINATION ${CMAKE_INSTALL_BINDIR}
+            COMPONENT sonivoxeas_application
+            RUNTIME_DEPENDENCY_SET sonivoxeas-dependencies
+        )

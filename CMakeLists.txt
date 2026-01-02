@@ -43,3 +43,47 @@ endif()
 add_subdirectory(libsvoxeas)
 add_subdirectory(cmdlnsynth)
 add_subdirectory(guisynth)
+
+if (CMAKE_SYSTEM_NAME MATCHES "Windows")
+    message(STATUS "DEPENDENCY_DIRS: ${DEPENDENCY_DIRS}")
+    install(RUNTIME_DEPENDENCY_SET sonivoxeas-dependencies
+        COMPONENT sonivoxeas_runtime
+        PRE_INCLUDE_REGEXES .*zlib.* .*sonivox.*
+        PRE_EXCLUDE_REGEXES .*
+        DIRECTORIES ${CMAKE_CURRENT_BINARY_DIR} ${DEPENDENCY_DIRS}
+    )
+endif()
+
+# CPack support
+set ( CPACK_PACKAGE_DESCRIPTION_SUMMARY "Multiplatform Sonivox EAS synthesizer" )
+set ( CPACK_PACKAGE_VENDOR "https://github.com/pedrolcl/multiplatform_sonivoxeas" )
+set ( CPACK_PACKAGE_DESCRIPTION_FILE "${PROJECT_SOURCE_DIR}/README.md" )
+set ( CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE" )
+set ( CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR} )
+set ( CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR} )
+set ( CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH} )
+#set ( CPACK_PACKAGE_EXECUTABLES "mp_cmdlnsynth m_guisynth" "SonivoxEAS" )
+
+# source packages
+set ( CPACK_SOURCE_IGNORE_FILES "/.git/;/build/;~$;${CPACK_SOURCE_IGNORE_FILES}" )
+set ( CPACK_SOURCE_PACKAGE_FILE_NAME "sonivoxeas-${PROJECT_VERSION}" )
+set ( CPACK_SOURCE_STRIP_FILES OFF )
+
+# binary packages
+include ( InstallRequiredSystemLibraries )
+set ( CPACK_PACKAGE_NAME sonivoxeas )
+set ( CPACK_STRIP_FILES ON )
+
+include ( CPack )
+
+cpack_add_component(sonivoxeas_runtime
+  DISPLAY_NAME "Runtime Libraries"
+  DESCRIPTION "Shared libraries (DLL) needed to run SonivoxEAS programs")
+cpack_add_component(sonivoxeas_application
+  DISPLAY_NAME "SonivoxEAS Programs"
+  DESCRIPTION "SonivoxEAS CLI and GUI Programs"
+  DEPENDS sonivoxeas_runtime)
+cpack_add_component(sonivoxeas_development
+  DISPLAY_NAME "C Headers and import libraries"
+  DESCRIPTION "C headers and import libraries for developing with SonivoxEAS"
+  DEPENDS sonivoxeas_runtime)
