@@ -3,19 +3,19 @@ project( multiplatform_sonivoxeas
          VERSION 2.2.0
          DESCRIPTION "Multiplatform Sonivox EAS for Qt" )
 
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(CMAKE_AUTOUIC ON)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS ON)
-
 include(GNUInstallDirs)
 
 option(USE_QT5 "Choose Qt5 instead of the default Qt6")
 
 if (USE_QT5)
+    set(CMAKE_INCLUDE_CURRENT_DIR ON)
+    set(CMAKE_AUTOUIC ON)
+    set(CMAKE_AUTOMOC ON)
+    set(CMAKE_AUTORCC ON)
+    set(CMAKE_CXX_STANDARD 17)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+    set(CMAKE_CXX_EXTENSIONS ON)
+
     find_package(QT NAMES Qt5 REQUIRED)
 else()
     find_package(QT NAMES Qt6 REQUIRED)
@@ -24,7 +24,12 @@ if (QT_FOUND)
     message(STATUS "Qt v${QT_VERSION} found")
 endif()
 
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Core Gui Widgets Multimedia REQUIRED)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Gui Widgets Multimedia)
+
+if (NOT USE_QT5)
+    qt6_standard_project_setup()
+endif()
+
 find_package(Drumstick 2.10 COMPONENTS RT Widgets REQUIRED)
 if (Drumstick_FOUND)
     message(STATUS "Drumstick v${Drumstick_VERSION} found")
@@ -44,11 +49,26 @@ add_subdirectory(libsvoxeas)
 add_subdirectory(cmdlnsynth)
 add_subdirectory(guisynth)
 
+if (NOT USE_QT5)
+    qt_generate_deploy_app_script(
+        TARGET mp_guisynth
+        OUTPUT_SCRIPT deploy_script
+        NO_UNSUPPORTED_PLATFORM_ERROR
+        # INCLUDE_PLUGINS drumstick2
+    )
+    install(SCRIPT ${deploy_script})
+endif()
+
+install(DIRECTORY ${Drumstick_DIR}/lib/drumstick2
+    DESTINATION plugins
+    COMPONENT sonivoxeas_runtime
+)
+
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     message(STATUS "DEPENDENCY_DIRS: ${DEPENDENCY_DIRS}")
     install(RUNTIME_DEPENDENCY_SET sonivoxeas-dependencies
         COMPONENT sonivoxeas_runtime
-        PRE_INCLUDE_REGEXES .*zlib.* .*sonivox.*
+        PRE_INCLUDE_REGEXES .*zlib.* .*sonivox.* .*drumstick.*
         PRE_EXCLUDE_REGEXES .*
         DIRECTORIES ${CMAKE_CURRENT_BINARY_DIR} ${DEPENDENCY_DIRS}
     )
