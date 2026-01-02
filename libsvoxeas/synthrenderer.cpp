@@ -22,8 +22,9 @@
 #include <QTextStream>
 #include <QDebug>
 
-#include <eas_reverb.h>
 #include <eas_chorus.h>
+#include <eas_report.h>
+#include <eas_reverb.h>
 
 #include "programsettings.h"
 #include "synthrenderer.h"
@@ -77,6 +78,9 @@ SynthRenderer::initEAS()
         qCritical() << Q_FUNC_INFO << "EAS_Config returned null";
         return;
     }
+
+    EAS_SetDebugFile(stderr, 1);
+    EAS_SetDebugLevel(_EAS_SEVERITY_ERROR);
 
     eas_res = EAS_Init(&dataHandle);
     if (eas_res != EAS_SUCCESS) {

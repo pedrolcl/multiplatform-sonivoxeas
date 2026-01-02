@@ -35,7 +35,8 @@ MainWindow::MainWindow(QWidget *parent) :
     m_synth = new SynthController(ProgramSettings::instance()->bufferTime(), this);
 
     m_ui->combo_Device->addItems(m_synth->availableAudioDevices());
-    m_ui->combo_Device->setCurrentText(m_synth->audioDeviceName());
+    m_ui->combo_Device->setCurrentText(ProgramSettings::instance()->audioDeviceName());
+    m_synth->setAudioDeviceName(ProgramSettings::instance()->audioDeviceName());
     m_ui->combo_MIDI->addItems(m_synth->connections());
     m_ui->combo_Reverb->addItem(QStringLiteral("Large Hall"), 0);
     m_ui->combo_Reverb->addItem(QStringLiteral("Hall"), 1);
@@ -69,11 +70,11 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_synth, SIGNAL(playbackStopped()), this, SLOT(songStopped()));
     connect(m_synth, &SynthController::underrunDetected, this, &MainWindow::underrunMessage);
     connect(m_synth, &SynthController::stallDetected, this, &MainWindow::stallMessage);
+    connect(m_synth, &SynthController::synthStarted, this, &MainWindow::initializeSynth);
 
     updateState(EmptyState);
     adjustSize();
     m_synth->restart();
-    initializeSynth();
 }
 
 MainWindow::~MainWindow()
@@ -108,8 +109,14 @@ MainWindow::initializeSynth()
     m_ui->pianoKeybd->setShowLabels(drumstick::widgets::LabelVisibility::ShowMinimum);
     m_ui->pianoKeybd->setNumKeys(25, 0);
     m_synth->setMidiDriver(ProgramSettings::instance()->midiDriver());
-    if (m_ui->combo_MIDI->count()) {
-        subscriptionChanged(0);
+    auto midiPort = ProgramSettings::instance()->portName();
+    if (m_ui->combo_MIDI->count() > 0) {
+        if (midiPort.isEmpty()) {
+            subscriptionChanged(0);
+        } else {
+            m_ui->combo_MIDI->setCurrentText(midiPort);
+            m_synth->subscribe(midiPort);
+        }
     }
 }
 
@@ -171,7 +178,6 @@ void MainWindow::deviceChanged(int value)
     //qDebug() << Q_FUNC_INFO << newDevice;
     m_synth->setAudioDeviceName(newDevice);
     ProgramSettings::instance()->setAudioDeviceName(newDevice);
-    initializeSynth();
 }
 
 void MainWindow::subscriptionChanged(int value)
@@ -187,7 +193,6 @@ void MainWindow::bufferSizeChanged(int value)
     //qDebug() << Q_FUNC_INFO << value;
     m_synth->setBufferSize(value);
     ProgramSettings::instance()->setBufferTime(value);
-    initializeSynth();
 }
 
 void MainWindow::octaveChanged(int value)
@@ -236,15 +241,12 @@ MainWindow::openMIDIFile()
                                        tr("Open MIDI file"),
                                        QString(),
                                        tr("MIDI Files (*.mid *.midi *.kar *.rmi *.xmf *.mxmf)"));
-    m_synth->stop();
     if (songFile.isEmpty()) {
         m_ui->lblSong->setText("[empty]");
         updateState(EmptyState);
     } else {
         readMIDIFile(songFile);
     }
-    m_synth->start();
-    initializeSynth();
 }
 
 void MainWindow::readSoundfont(const QFileInfo &file)
@@ -272,8 +274,6 @@ void MainWindow::openSoundfont()
         QFileInfo fInfo(fileName);
         readSoundfont(fInfo);
     }
-    m_synth->restart();
-    initializeSynth();
 }
 
 void

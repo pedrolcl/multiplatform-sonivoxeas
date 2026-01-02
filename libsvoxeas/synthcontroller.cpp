@@ -92,6 +92,7 @@ SynthController::start()
         m_running = true;
         m_stallDetector.start(bufferTime * 4);
      });
+    emit synthStarted();
 }
 
 void

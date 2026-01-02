@@ -42,7 +42,6 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     void updateState(PlayerState newState);
-    void initializeSynth();
     void readMIDIFile(const QString &file);
     void readSoundfont(const QFileInfo &fileInfo);
     void listPorts();
@@ -66,6 +65,7 @@ private slots:
     void songStopped();
     void underrunMessage();
     void stallMessage();
+    void initializeSynth();
 
     void openMIDIFile();
     void openSoundfont();

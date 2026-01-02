@@ -82,6 +82,7 @@ signals:
     void midiNoteOff(const int note, const int vel);
     void playbackStopped();
     void playbackTime(int time);
+    void synthStarted();
 
 private:
     void initAudio();
