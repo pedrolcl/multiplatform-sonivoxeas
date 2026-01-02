@@ -95,6 +95,7 @@ MainWindow::initializeSynth()
     m_ui->combo_Chorus->setCurrentIndex(chorus);
     m_ui->dial_Chorus->setValue(ProgramSettings::instance()->chorusLevel());
     m_ui->volumeSlider->setValue(ProgramSettings::instance()->volumeLevel());
+    m_synth->program(0, m_ui->spinPgm->value());
     QFileInfo dlsInfo(ProgramSettings::instance()->Soundfont());
     if (dlsInfo.exists() && dlsInfo.isReadable()) {
         readSoundfont(dlsInfo);
