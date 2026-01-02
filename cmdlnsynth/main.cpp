@@ -181,17 +181,18 @@ int main(int argc, char *argv[])
         qApp->quit();
     });
     QObject::connect(&app, &QCoreApplication::aboutToQuit, ProgramSettings::instance(), &ProgramSettings::SaveToNativeStorage);
-    QObject::connect(synth.get(), SIGNAL(playbackStopped()), synth.get(), SLOT(stop()));
-    QObject::connect(synth.get(), SIGNAL(playbackStopped()), &app, SLOT(quit()));
+    QObject::connect(synth.get(), &SynthController::playbackStopped, synth.get(), [=] {
+        synth->stop();
+        qApp->quit();
+    });
     QStringList args = parser.positionalArguments();
     if (!args.isEmpty()) {
         for(int i = 0; i < args.length();  ++i) {
             QFileInfo argFile(args[i]);
             if (argFile.exists()) {
-                synth->playFile(argFile.filePath());
+                synth->startPlayback(argFile.absoluteFilePath());
             }
         }
     }
-    synth->start();
     return app.exec();
 }
