@@ -497,6 +497,7 @@ SynthRenderer::setChorusLevel(int amount)
 void SynthRenderer::initSoundfont(const QString soundfont)
 {
     if (m_soundfont != soundfont) {
+        //qDebug() << Q_FUNC_INFO << soundfont;
         m_soundfont = soundfont;
         uninitEAS();
         initEAS();
@@ -538,10 +539,10 @@ SynthRenderer::preparePlayback()
             qWarning() << Q_FUNC_INFO << "EAS_ParseMetaData. result=" << result;
             return;
         }
-        else
-        {
-            qDebug() << Q_FUNC_INFO << "EAS_ParseMetaData. playTime=" << playTime;
-        }
+        // else
+        // {
+        //     qDebug() << Q_FUNC_INFO << "EAS_ParseMetaData. playTime=" << playTime;
+        // }
         m_fileHandle = handle;
         m_isPlaying = true;
     }

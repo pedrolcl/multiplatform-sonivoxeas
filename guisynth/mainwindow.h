@@ -62,6 +62,7 @@ private slots:
     void bufferSizeChanged(int value);
     void octaveChanged(int value);
     void volumeChanged(int value);
+    void programChanged(int value);
     void songStopped();
     void underrunMessage();
     void stallMessage();

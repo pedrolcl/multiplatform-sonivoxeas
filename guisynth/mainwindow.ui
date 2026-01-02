@@ -51,13 +51,13 @@
         <height>130</height>
        </size>
       </property>
-      <property name="baseOctave">
+      <property name="baseOctave" stdset="0">
        <number>3</number>
       </property>
-      <property name="numKeys">
+      <property name="numKeys" stdset="0">
        <number>25</number>
       </property>
-      <property name="keyPressedColor">
+      <property name="keyPressedColor" stdset="0">
        <color>
         <red>255</red>
         <green>0</green>
@@ -66,28 +66,19 @@
       </property>
      </widget>
     </item>
-    <item row="2" column="0">
-     <widget class="QLabel" name="lblReverb">
-      <property name="text">
-       <string>Reverb</string>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignmentFlag::AlignCenter</set>
+    <item row="4" column="0">
+     <widget class="QDial" name="dial_Reverb">
+      <property name="maximum">
+       <number>32765</number>
       </property>
      </widget>
     </item>
-    <item row="2" column="1">
-     <spacer name="verticalSpacer">
-      <property name="orientation">
-       <enum>Qt::Orientation::Vertical</enum>
+    <item row="4" column="2">
+     <widget class="QDial" name="dial_Chorus">
+      <property name="maximum">
+       <number>32765</number>
       </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>20</width>
-        <height>8</height>
-       </size>
-      </property>
-     </spacer>
+     </widget>
     </item>
     <item row="2" column="2">
      <widget class="QLabel" name="lblChorus">
@@ -99,25 +90,8 @@
       </property>
      </widget>
     </item>
-    <item row="3" column="0">
-     <widget class="QDial" name="dial_Reverb">
-      <property name="maximum">
-       <number>32765</number>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="2">
-     <widget class="QDial" name="dial_Chorus">
-      <property name="maximum">
-       <number>32765</number>
-      </property>
-     </widget>
-    </item>
-    <item row="4" column="0">
+    <item row="5" column="0">
      <widget class="QComboBox" name="combo_Reverb"/>
-    </item>
-    <item row="4" column="2">
-     <widget class="QComboBox" name="combo_Chorus"/>
     </item>
     <item row="0" column="0" colspan="3">
      <layout class="QFormLayout" name="formLayout">
@@ -356,6 +330,29 @@
          </widget>
         </item>
         <item>
+         <widget class="QLabel" name="lblPgm">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>Program:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="spinPgm">
+          <property name="maximum">
+           <number>127</number>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QLabel" name="lblOctave">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -386,13 +383,53 @@
            <number>8</number>
           </property>
           <property name="value">
-           <number>3</number>
+           <number>4</number>
           </property>
          </widget>
         </item>
        </layout>
       </item>
      </layout>
+    </item>
+    <item row="2" column="0">
+     <widget class="QLabel" name="lblReverb">
+      <property name="text">
+       <string>Reverb</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignmentFlag::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="2">
+     <widget class="QComboBox" name="combo_Chorus"/>
+    </item>
+    <item row="2" column="1">
+     <spacer name="verticalSpacer">
+      <property name="orientation">
+       <enum>Qt::Orientation::Vertical</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>20</width>
+        <height>8</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+    <item row="3" column="0">
+     <widget class="QLabel" name="lblWetVal">
+      <property name="text">
+       <string>Wet:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="2">
+     <widget class="QLabel" name="lblChousLevel">
+      <property name="text">
+       <string>Level:</string>
+      </property>
+     </widget>
     </item>
    </layout>
   </widget>

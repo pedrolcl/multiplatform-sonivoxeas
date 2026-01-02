@@ -65,7 +65,7 @@ SynthController::~SynthController()
 void
 SynthController::start()
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     auto bufferBytes = m_format.bytesForDuration(m_requestedBufferTime * 1000);
     // qDebug() << Q_FUNC_INFO
     //          << "Requested buffer size:" << bufferBytes << "bytes,"
@@ -98,7 +98,7 @@ SynthController::start()
 void
 SynthController::stop()
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     m_running = false;
     m_stallDetector.stop();
     if (m_audioOutput) {
@@ -278,7 +278,7 @@ const QString SynthController::midiDriver() const
 
 void SynthController::setMidiDriver(const QString newMidiDriver)
 {
-    qDebug() << Q_FUNC_INFO << newMidiDriver;
+    // qDebug() << Q_FUNC_INFO << newMidiDriver;
     if (m_renderer && !newMidiDriver.isEmpty()) {
         m_renderer->setMidiDriver(newMidiDriver);
         m_midiDriver = newMidiDriver;
@@ -303,7 +303,7 @@ QString SynthController::subscription() const
 
 void SynthController::subscribe(const QString &portName)
 {
-    qDebug() << Q_FUNC_INFO << portName;
+    // qDebug() << Q_FUNC_INFO << portName;
     if (m_renderer && !portName.isEmpty()) {
         m_renderer->subscribe(portName);
         m_portName = portName;
@@ -377,5 +377,12 @@ void SynthController::noteOff(int chan, int note, int vel)
 {
     if (m_renderer) {
         m_renderer->noteOff(chan, note, vel);
+    }
+}
+
+void SynthController::program(int chan, int pgm)
+{
+    if (m_renderer) {
+        m_renderer->program(chan, pgm);
     }
 }

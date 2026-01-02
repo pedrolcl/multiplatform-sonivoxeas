@@ -56,6 +56,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_ui->combo_Chorus, SIGNAL(currentIndexChanged(int)), this, SLOT(chorusTypeChanged(int)));
     connect(m_ui->spinBuffer, SIGNAL(valueChanged(int)), this, SLOT(bufferSizeChanged(int)));
     connect(m_ui->spinOctave, SIGNAL(valueChanged(int)), this, SLOT(octaveChanged(int)));
+    connect(m_ui->spinPgm, SIGNAL(valueChanged(int)), this, SLOT(programChanged(int)));
     connect(m_ui->volumeSlider, &QSlider::valueChanged, this, &MainWindow::volumeChanged);
     connect(m_ui->dial_Reverb, &QDial::valueChanged, this, &MainWindow::reverbChanged);
     connect(m_ui->dial_Chorus, &QDial::valueChanged, this, &MainWindow::chorusChanged);
@@ -85,7 +86,7 @@ MainWindow::~MainWindow()
 void
 MainWindow::initializeSynth()
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     m_ui->spinBuffer->setValue(ProgramSettings::instance()->bufferTime());
     int reverb = m_ui->combo_Reverb->findData(ProgramSettings::instance()->reverbType());
     m_ui->combo_Reverb->setCurrentIndex(reverb);
@@ -108,6 +109,7 @@ MainWindow::initializeSynth()
     m_ui->pianoKeybd->setFont(f);
     m_ui->pianoKeybd->setShowLabels(drumstick::widgets::LabelVisibility::ShowMinimum);
     m_ui->pianoKeybd->setNumKeys(25, 0);
+    m_ui->pianoKeybd->setBaseOctave(m_ui->spinOctave->value());
     m_synth->setMidiDriver(ProgramSettings::instance()->midiDriver());
     auto midiPort = ProgramSettings::instance()->portName();
     if (m_ui->combo_MIDI->count() > 0) {
@@ -183,7 +185,7 @@ void MainWindow::deviceChanged(int value)
 void MainWindow::subscriptionChanged(int value)
 {
     QString portName = m_ui->combo_MIDI->itemText(value);
-    qDebug() << Q_FUNC_INFO << value << portName;
+    // qDebug() << Q_FUNC_INFO << value << portName;
     m_synth->subscribe(portName);
     ProgramSettings::instance()->setPortName(portName);
 }
@@ -206,6 +208,12 @@ void MainWindow::volumeChanged(int value)
     //qDebug() << Q_FUNC_INFO << value;
     m_synth->setVolume(value);
     ProgramSettings::instance()->setVolumeLevel(value);
+}
+
+void MainWindow::programChanged(int value)
+{
+    //qDebug() << Q_FUNC_INFO << value;
+    m_synth->program(0, value);
 }
 
 void

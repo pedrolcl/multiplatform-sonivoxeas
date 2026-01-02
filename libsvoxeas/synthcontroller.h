@@ -71,6 +71,7 @@ public:
 public slots:
     void noteOn(int chan, int note, int vel);
     void noteOff(int chan, int note, int vel);
+    void program(int chan, int pgm);
     void start();
     void stop();
 
