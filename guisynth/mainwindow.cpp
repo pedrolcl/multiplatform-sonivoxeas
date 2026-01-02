@@ -32,10 +32,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_state(InitialState)
 {
     m_ui->setupUi(this);
-
     m_synth = new SynthController(ProgramSettings::instance()->bufferTime(), this);
-    m_synth->setMidiDriver(ProgramSettings::instance()->midiDriver());
-    m_synth->subscribe(ProgramSettings::instance()->portName());
 
     m_ui->combo_Device->addItems(m_synth->availableAudioDevices());
     m_ui->combo_Device->setCurrentText(m_synth->audioDeviceName());
@@ -73,10 +70,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_synth, &SynthController::underrunDetected, this, &MainWindow::underrunMessage);
     connect(m_synth, &SynthController::stallDetected, this, &MainWindow::stallMessage);
 
-    m_songFile = QString();
     updateState(EmptyState);
-    initialize();
     adjustSize();
+    m_synth->restart();
+    initializeSynth();
 }
 
 MainWindow::~MainWindow()
@@ -85,10 +82,9 @@ MainWindow::~MainWindow()
 }
 
 void
-MainWindow::initialize()
+MainWindow::initializeSynth()
 {
-    m_ui->combo_MIDI->setCurrentText(ProgramSettings::instance()->portName());
-    m_ui->combo_Device->setCurrentText(ProgramSettings::instance()->audioDeviceName());
+    qDebug() << Q_FUNC_INFO;
     m_ui->spinBuffer->setValue(ProgramSettings::instance()->bufferTime());
     int reverb = m_ui->combo_Reverb->findData(ProgramSettings::instance()->reverbType());
     m_ui->combo_Reverb->setCurrentIndex(reverb);
@@ -111,7 +107,10 @@ MainWindow::initialize()
     m_ui->pianoKeybd->setFont(f);
     m_ui->pianoKeybd->setShowLabels(drumstick::widgets::LabelVisibility::ShowMinimum);
     m_ui->pianoKeybd->setNumKeys(25, 0);
-    m_synth->restart();
+    m_synth->setMidiDriver(ProgramSettings::instance()->midiDriver());
+    if (m_ui->combo_MIDI->count()) {
+        subscriptionChanged(0);
+    }
 }
 
 void
@@ -172,12 +171,13 @@ void MainWindow::deviceChanged(int value)
     //qDebug() << Q_FUNC_INFO << newDevice;
     m_synth->setAudioDeviceName(newDevice);
     ProgramSettings::instance()->setAudioDeviceName(newDevice);
+    initializeSynth();
 }
 
 void MainWindow::subscriptionChanged(int value)
 {
     QString portName = m_ui->combo_MIDI->itemText(value);
-    //qDebug() << Q_FUNC_INFO << value << portName;
+    qDebug() << Q_FUNC_INFO << value << portName;
     m_synth->subscribe(portName);
     ProgramSettings::instance()->setPortName(portName);
 }
@@ -187,6 +187,7 @@ void MainWindow::bufferSizeChanged(int value)
     //qDebug() << Q_FUNC_INFO << value;
     m_synth->setBufferSize(value);
     ProgramSettings::instance()->setBufferTime(value);
+    initializeSynth();
 }
 
 void MainWindow::octaveChanged(int value)
@@ -243,6 +244,7 @@ MainWindow::openMIDIFile()
         readMIDIFile(songFile);
     }
     m_synth->start();
+    initializeSynth();
 }
 
 void MainWindow::readSoundfont(const QFileInfo &file)
@@ -271,6 +273,7 @@ void MainWindow::openSoundfont()
         readSoundfont(fInfo);
     }
     m_synth->restart();
+    initializeSynth();
 }
 
 void

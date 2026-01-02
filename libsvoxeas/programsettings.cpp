@@ -32,7 +32,7 @@ const QString ProgramSettings::DEFAULT_MIDI_DRIVER =
     QLatin1String("Network");
 #endif
 const QString ProgramSettings::DEFAULT_AUDIO_DEVICE = QLatin1String("default");
-const int ProgramSettings::DEFAULT_BUFFER_TIME = 100;
+const int ProgramSettings::DEFAULT_BUFFER_TIME = 50;
 const int ProgramSettings::DEFAULT_REVERB_TYPE = 1;
 const int ProgramSettings::DEFAULT_REVERB_WET = 25800;
 const int ProgramSettings::DEFAULT_CHORUS_TYPE = -1;

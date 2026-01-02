@@ -73,8 +73,6 @@ SynthController::start()
     if (!m_renderer) {
         m_renderer = new SynthRenderer();
         connectRendererSignals();
-        setMidiDriver(m_midiDriver);
-        subscribe(m_portName);
     }
     if (m_renderer) {
         m_renderer->reserveBuffer(bufferBytes * 2);
@@ -109,6 +107,7 @@ SynthController::stop()
     }
     if (m_renderer && !m_renderer->stopped()) {
         m_renderer->stop();
+        m_renderer->disconnect();
     }
     delete m_renderer;
     m_renderer = nullptr;
@@ -278,7 +277,7 @@ const QString SynthController::midiDriver() const
 
 void SynthController::setMidiDriver(const QString newMidiDriver)
 {
-    //qDebug() << Q_FUNC_INFO << newMidiDriver;
+    qDebug() << Q_FUNC_INFO << newMidiDriver;
     if (m_renderer && !newMidiDriver.isEmpty()) {
         m_renderer->setMidiDriver(newMidiDriver);
         m_midiDriver = newMidiDriver;
@@ -303,7 +302,7 @@ QString SynthController::subscription() const
 
 void SynthController::subscribe(const QString &portName)
 {
-    //qDebug() << Q_FUNC_INFO << portName;
+    qDebug() << Q_FUNC_INFO << portName;
     if (m_renderer && !portName.isEmpty()) {
         m_renderer->subscribe(portName);
         m_portName = portName;
