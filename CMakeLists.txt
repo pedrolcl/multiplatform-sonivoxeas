@@ -55,6 +55,7 @@ if (INSTALL_DEPLOY AND NOT USE_QT5)
         TARGET mp_guisynth
         OUTPUT_SCRIPT deploy_script
         NO_UNSUPPORTED_PLATFORM_ERROR
+        NO_COMPILER_RUNTIME
     )
     install(SCRIPT ${deploy_script} COMPONENT sonivoxeas_runtime)
 endif()
@@ -73,7 +74,7 @@ if(INSTALL_DEPLOY)
         list(APPEND PLUGINS ${_prop})
     endif()
     install(FILES ${PLUGINS}
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/plugins/drumstick2
+        DESTINATION plugins/drumstick2
         COMPONENT sonivoxeas_runtime
     )
 

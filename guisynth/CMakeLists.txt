@@ -8,7 +8,7 @@ set( HEADERS mainwindow.h )
 set( FORMS mainwindow.ui )
 set( RESOURCES guisynth.qrc )
 
-add_executable( mp_guisynth
+add_executable( mp_guisynth WIN32 MACOSX_BUNDLE
   ${SOURCES}
   ${HEADERS}
   ${FORMS}
