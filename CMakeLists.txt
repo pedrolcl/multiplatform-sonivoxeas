@@ -5,7 +5,8 @@ project( multiplatform_sonivoxeas
 
 include(GNUInstallDirs)
 
-option(USE_QT5 "Choose Qt5 instead of the default Qt6")
+option(USE_QT5 "Choose Qt5 instead of the default Qt6" OFF)
+option(INSTALL_DEPLOY "Deploy Dependencies at Install" OFF)
 
 if (USE_QT5)
     set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -49,29 +50,50 @@ add_subdirectory(libsvoxeas)
 add_subdirectory(cmdlnsynth)
 add_subdirectory(guisynth)
 
-if (NOT USE_QT5)
+if (INSTALL_DEPLOY AND NOT USE_QT5)
     qt_generate_deploy_app_script(
         TARGET mp_guisynth
         OUTPUT_SCRIPT deploy_script
         NO_UNSUPPORTED_PLATFORM_ERROR
-        # INCLUDE_PLUGINS drumstick2
     )
-    install(SCRIPT ${deploy_script})
+    install(SCRIPT ${deploy_script} COMPONENT sonivoxeas_runtime)
 endif()
 
-install(DIRECTORY ${Drumstick_DIR}/lib/drumstick2
-    DESTINATION plugins
-    COMPONENT sonivoxeas_runtime
-)
-
-if (CMAKE_SYSTEM_NAME MATCHES "Windows")
-    message(STATUS "DEPENDENCY_DIRS: ${DEPENDENCY_DIRS}")
-    install(RUNTIME_DEPENDENCY_SET sonivoxeas-dependencies
+if(INSTALL_DEPLOY)
+    # MIDI input plugins from Drumstick::RT
+    get_target_property(_prop Drumstick::drumstick-rt-net-in LOCATION)
+    list(APPEND PLUGINS ${_prop})
+    if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+        get_target_property(_prop Drumstick::drumstick-rt-alsa-in LOCATION)
+        list(APPEND PLUGINS ${_prop})
+        get_target_property(_prop Drumstick::drumstick-rt-oss-in LOCATION)
+        list(APPEND PLUGINS ${_prop})
+    elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
+        get_target_property(_prop Drumstick::drumstick-rt-win-in LOCATION)
+        list(APPEND PLUGINS ${_prop})
+    endif()
+    install(FILES ${PLUGINS}
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/plugins/drumstick2
         COMPONENT sonivoxeas_runtime
-        PRE_INCLUDE_REGEXES .*zlib.* .*sonivox.* .*drumstick.*
-        PRE_EXCLUDE_REGEXES .*
-        DIRECTORIES ${CMAKE_CURRENT_BINARY_DIR} ${DEPENDENCY_DIRS}
     )
+
+    if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+        # AppDir symlinks
+        install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_INSTALL_PREFIX}/bin/mp_guisynth ${CMAKE_INSTALL_PREFIX}/../AppRun)"
+            COMPONENT sonivoxeas_runtime)
+        install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_INSTALL_PREFIX}/share/applications/sonivoxeas.desktop ${CMAKE_INSTALL_PREFIX}/../sonivoxeas.desktop)"
+            COMPONENT sonivoxeas_runtime)
+        install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/512x512/apps/sonivoxeas.png ${CMAKE_INSTALL_PREFIX}/../sonivoxeas.png)"
+            COMPONENT sonivoxeas_runtime)
+    else()
+        message(STATUS "DEPENDENCY_DIRS: ${DEPENDENCY_DIRS}")
+        install(RUNTIME_DEPENDENCY_SET sonivoxeas-dependencies
+            COMPONENT sonivoxeas_runtime
+            PRE_INCLUDE_REGEXES .*zlib.* .*sonivox.* .*drumstick.*
+            PRE_EXCLUDE_REGEXES .*
+            DIRECTORIES ${CMAKE_CURRENT_BINARY_DIR} ${DEPENDENCY_DIRS}
+        )
+    endif()
 endif()
 
 # CPack support
@@ -82,7 +104,7 @@ set ( CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE" )
 set ( CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR} )
 set ( CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR} )
 set ( CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH} )
-#set ( CPACK_PACKAGE_EXECUTABLES "mp_cmdlnsynth m_guisynth" "SonivoxEAS" )
+set ( CPACK_PACKAGE_EXECUTABLES "mp_guisynth;SonivoxEAS" )
 
 # source packages
 set ( CPACK_SOURCE_IGNORE_FILES "/.git/;/build/;~$;${CPACK_SOURCE_IGNORE_FILES}" )
