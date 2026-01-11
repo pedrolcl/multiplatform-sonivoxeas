@@ -152,6 +152,7 @@ MainWindow::reverbTypeChanged(int index)
 void
 MainWindow::reverbChanged(int value)
 {
+    m_ui->lblWetVal->setNum(value);
     m_synth->setReverbWet(value);
     ProgramSettings::instance()->setReverbWet(value);
 }
@@ -171,6 +172,7 @@ MainWindow::chorusTypeChanged(int index)
 void
 MainWindow::chorusChanged(int value)
 {
+    m_ui->lblLevelVa->setNum(value);
     m_synth->setChorusLevel(value);
     ProgramSettings::instance()->setChorusLevel(value);
 }

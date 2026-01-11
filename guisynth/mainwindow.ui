@@ -491,38 +491,5 @@
  <resources>
   <include location="guisynth.qrc"/>
  </resources>
- <connections>
-  <connection>
-   <sender>dial_Reverb</sender>
-   <signal>valueChanged(int)</signal>
-   <receiver>lblWetVal</receiver>
-   <slot>setNum(int)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>105</x>
-     <y>415</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>103</x>
-     <y>368</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>dial_Chorus</sender>
-   <signal>valueChanged(int)</signal>
-   <receiver>lblLevelVa</receiver>
-   <slot>setNum(int)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>372</x>
-     <y>422</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>373</x>
-     <y>370</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>
