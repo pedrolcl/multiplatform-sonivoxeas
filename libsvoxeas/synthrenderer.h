@@ -57,6 +57,7 @@ public:
     /* Sonivox EAS*/
     void initReverb(int reverb_type);
     void initChorus(int chorus_type);
+    void initSoundLib(int sound_lib);
     void setReverbWet(int amount);
     void setChorusLevel(int amount);
     void initSoundfont(const QString soundfont);
@@ -114,6 +115,7 @@ private:
     FileWrapper *m_currentFile;
     QStringList m_files;
     QString m_soundfont;
+    E_EAS_SNDLIB_TYPE m_soundLib;
 
     // Qt Multimedia
     QAudioFormat m_format;

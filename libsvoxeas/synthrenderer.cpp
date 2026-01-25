@@ -32,15 +32,17 @@
 
 using namespace drumstick::rt;
 
-SynthRenderer::SynthRenderer(QObject *parent):
-    QIODevice(parent),
-    m_isPlaying(false),
-    m_input(nullptr),
-    m_currentFile(nullptr),
-    m_lastBufferSize(0),
-    m_soundfont("")
+SynthRenderer::SynthRenderer(QObject *parent)
+    : QIODevice(parent)
+    , m_isPlaying(false)
+    , m_input(nullptr)
+    , m_currentFile(nullptr)
+    , m_lastBufferSize(0)
+    , m_soundfont("")
+    , m_soundLib((E_EAS_SNDLIB_TYPE) ProgramSettings::DEFAULT_SOUND_LIB)
 {
     //qDebug() << Q_FUNC_INFO;
+    m_soundLib = (E_EAS_SNDLIB_TYPE) ProgramSettings::instance()->soundLib();
     initMIDI();
     initEAS();
 }
@@ -86,6 +88,17 @@ SynthRenderer::initEAS()
     if (eas_res != EAS_SUCCESS) {
       qCritical() << Q_FUNC_INFO << "EAS_Init error: " << eas_res;
       return;
+    }
+
+    const char *sndlib_name = EAS_GetDefaultSoundLibrary((E_EAS_SNDLIB_TYPE) m_soundLib);
+    if (sndlib_name == NULL) {
+        qCritical() << "Failed to get default sound library name";
+        return;
+    }
+    eas_res = EAS_SetSoundLibrary(dataHandle, NULL, EAS_GetSoundLibrary(dataHandle, sndlib_name));
+    if (eas_res != EAS_SUCCESS) {
+        qCritical() << Q_FUNC_INFO << "EAS_SetSoundLibrary error: " << eas_res;
+        return;
     }
 
     if (!m_soundfont.isEmpty()) {
@@ -471,6 +484,16 @@ SynthRenderer::initChorus(int chorus_type)
     eas_res = EAS_SetParameter(m_easData, EAS_MODULE_CHORUS, EAS_PARAM_CHORUS_BYPASS, sw);
     if (eas_res != EAS_SUCCESS) {
         qWarning() << "EAS_SetParameter error:" << eas_res;
+    }
+}
+
+void SynthRenderer::initSoundLib(int sound_lib)
+{
+    if (m_soundLib != sound_lib) {
+        //qDebug() << Q_FUNC_INFO << sound_lib;
+        m_soundLib = (E_EAS_SNDLIB_TYPE) sound_lib;
+        uninitEAS();
+        initEAS();
     }
 }
 

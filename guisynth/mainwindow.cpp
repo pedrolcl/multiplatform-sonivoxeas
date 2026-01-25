@@ -66,6 +66,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_ui->stopButton, &QToolButton::clicked, this, &MainWindow::stopSong);
     connect(m_ui->pianoKeybd, SIGNAL(noteOn(int,int)), this, SLOT(noteOn(int,int)));
     connect(m_ui->pianoKeybd, SIGNAL(noteOff(int,int)), this, SLOT(noteOff(int,int)));
+    connect(m_ui->combo_sndlib, SIGNAL(currentIndexChanged(int)), this, SLOT(sndLibChanged(int)));
     connect(m_synth, SIGNAL(midiNoteOn(int, int)), this, SLOT(showNoteOn(int, int)));
     connect(m_synth, SIGNAL(midiNoteOff(int, int)), this, SLOT(showNoteOff(int, int)));
     connect(m_synth, SIGNAL(playbackStopped()), this, SLOT(songStopped()));
@@ -95,6 +96,7 @@ MainWindow::initializeSynth()
     m_ui->combo_Chorus->setCurrentIndex(chorus);
     m_ui->dial_Chorus->setValue(ProgramSettings::instance()->chorusLevel());
     m_ui->volumeSlider->setValue(ProgramSettings::instance()->volumeLevel());
+    m_ui->combo_sndlib->setCurrentIndex(ProgramSettings::instance()->soundLib() - 1);
     m_synth->program(0, m_ui->spinPgm->value());
     QFileInfo dlsInfo(ProgramSettings::instance()->Soundfont());
     if (dlsInfo.exists() && dlsInfo.isReadable()) {
@@ -217,6 +219,12 @@ void MainWindow::programChanged(int value)
 {
     //qDebug() << Q_FUNC_INFO << value;
     m_synth->program(0, value);
+}
+
+void MainWindow::sndLibChanged(int value)
+{
+    m_synth->initSoundLib(value + 1);
+    ProgramSettings::instance()->setSoundLib(value + 1);
 }
 
 void

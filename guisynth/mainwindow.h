@@ -63,6 +63,7 @@ private slots:
     void octaveChanged(int value);
     void volumeChanged(int value);
     void programChanged(int value);
+    void sndLibChanged(int value);
     void songStopped();
     void underrunMessage();
     void stallMessage();

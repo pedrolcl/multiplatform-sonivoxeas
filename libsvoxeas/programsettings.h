@@ -70,6 +70,10 @@ public:
     static const int DEFAULT_CHORUS_TYPE;
     static const int DEFAULT_CHORUS_LEVEL;
     static const int DEFAULT_VOLUME_LEVEL;
+    static const int DEFAULT_SOUND_LIB;
+
+    int soundLib() const;
+    void setSoundLib(int newSoundLib);
 
 signals:
     void ValuesChanged();
@@ -96,6 +100,7 @@ private:
     int m_volumeLevel;
     QString m_audioDeviceName;
     QString m_Soundfont;
+    int m_soundLib;
 };
 
 #endif // PROGRAMSETTINGS_H

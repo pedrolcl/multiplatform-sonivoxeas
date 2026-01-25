@@ -324,6 +324,13 @@ void SynthController::initChorus(int chorus_type)
     }
 }
 
+void SynthController::initSoundLib(int value)
+{
+    if (m_renderer) {
+        m_renderer->initSoundLib(value);
+    }
+}
+
 void SynthController::setReverbWet(int amount)
 {
     if (m_renderer) {

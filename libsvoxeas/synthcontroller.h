@@ -61,6 +61,7 @@ public:
 
     void initReverb(int reverb_type);
     void initChorus(int chorus_type);
+    void initSoundLib(int);
     void setReverbWet(int amount);
     void setChorusLevel(int amount);
     void initSoundfont(const QString soundfont);
