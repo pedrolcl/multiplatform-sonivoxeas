@@ -38,6 +38,7 @@ const int ProgramSettings::DEFAULT_REVERB_WET = 25800;
 const int ProgramSettings::DEFAULT_CHORUS_TYPE = -1;
 const int ProgramSettings::DEFAULT_CHORUS_LEVEL = 0;
 const int ProgramSettings::DEFAULT_VOLUME_LEVEL = 90;
+const int ProgramSettings::DEFAULT_SOUND_LIB = 1; // WT
 
 ProgramSettings::ProgramSettings(QObject *parent) : QObject(parent)
 {
@@ -59,6 +60,7 @@ void ProgramSettings::ResetDefaults()
     m_chorusType = DEFAULT_CHORUS_TYPE;
     m_chorusLevel = DEFAULT_CHORUS_LEVEL;
     m_volumeLevel = DEFAULT_VOLUME_LEVEL;
+    m_soundLib = DEFAULT_SOUND_LIB;
     m_Soundfont.clear();
     emit ValuesChanged();
 }
@@ -102,6 +104,7 @@ void ProgramSettings::internalRead(QSettings &settings)
     m_audioDeviceName = settings.value("AudioDevice", DEFAULT_AUDIO_DEVICE).toString();
     m_volumeLevel = settings.value("VolumeLevel", DEFAULT_VOLUME_LEVEL).toInt();
     m_Soundfont = settings.value("Soundfont", QString()).toString();
+    m_soundLib = settings.value("SoundLib", DEFAULT_SOUND_LIB).toInt();
     emit ValuesChanged();
 }
 
@@ -118,7 +121,18 @@ void ProgramSettings::internalSave(QSettings &settings)
     settings.setValue("AudioDevice", m_audioDeviceName);
     settings.setValue("VolumeLevel", m_volumeLevel);
     settings.setValue("Soundfont", m_Soundfont);
+    settings.setValue("SoundLib", m_soundLib);
     settings.sync();
+}
+
+int ProgramSettings::soundLib() const
+{
+    return m_soundLib;
+}
+
+void ProgramSettings::setSoundLib(int newSoundLib)
+{
+    m_soundLib = newSoundLib;
 }
 
 QString ProgramSettings::Soundfont() const

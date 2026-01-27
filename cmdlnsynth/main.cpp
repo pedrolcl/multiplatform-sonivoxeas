@@ -62,6 +62,10 @@ int main(int argc, char *argv[])
     QCommandLineOption chorusOption({"c", "chorus"}, "Chorus type (none=-1,presets=0,1,2,3).", "chorus_type", "-1");
     QCommandLineOption levelOption({"l", "level"}, "Chorus level (0..32765).", "chorus_level", "0");
     QCommandLineOption deviceOption({"a", "audiodevice"}, "Audio Device Name", "device_name", "default");
+    QCommandLineOption sndLibOption({"s", "soundlib"},
+                                    "Sound Library (1=WT, 2=FM)",
+                                    "sound_lib",
+                                    "1");
     parser.addOption(driverOption);
     parser.addOption(portOption);
     parser.addOption(listOption);
@@ -72,7 +76,8 @@ int main(int argc, char *argv[])
     parser.addOption(wetOption);
     parser.addOption(levelOption);
     parser.addOption(deviceOption);
-    parser.addPositionalArgument("files", "MIDI Files (.mid;.kar)", "[files ...]");
+    parser.addOption(sndLibOption);
+    parser.addPositionalArgument("files", "MIDI Files (.mid;.kar;.xmf)", "[files ...]");
     parser.process(app);
     ProgramSettings::instance()->ReadFromNativeStorage();
     if (parser.isSet(driverOption)) {
@@ -141,6 +146,15 @@ int main(int argc, char *argv[])
             ProgramSettings::instance()->setAudioDeviceName(s);
         } else {
             fputs("Wrong Device Name.\n", stderr);
+            parser.showHelp(1);
+        }
+    }
+    if (parser.isSet(sndLibOption)) {
+        int s = parser.value(sndLibOption).toInt();
+        if (s >= 1 && s <= 2) {
+            ProgramSettings::instance()->setSoundLib(s);
+        } else {
+            fputs("Wrong sound library type.\n", stderr);
             parser.showHelp(1);
         }
     }

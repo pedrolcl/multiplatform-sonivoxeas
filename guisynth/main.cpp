@@ -39,12 +39,17 @@ int main(int argc, char *argv[])
     QCommandLineOption listOption({"s", "subs"}, "List available MIDI Ports.");
     QCommandLineOption bufferOption({"b", "buffer"}, "Audio buffer time in milliseconds", "bufer_time", "100");
     QCommandLineOption deviceOption({"a", "audiodevice"}, "Audio Device Name", "device_name", "default");
+    QCommandLineOption sndLibOption({"s", "soundlib"},
+                                    "Sound Library (1=WT, 2=FM)",
+                                    "sound_lib",
+                                    "1");
     parser.addOption(driverOption);
     parser.addOption(portOption);
     parser.addOption(listOption);
     parser.addOption(bufferOption);
     parser.addOption(deviceOption);
-    parser.addPositionalArgument("file", "MIDI File (*.mid; *.kar)");
+    parser.addOption(sndLibOption);
+    parser.addPositionalArgument("file", "MIDI File (*.mid; *.kar; *.rmi; *.xmf)");
     parser.process(app);
     ProgramSettings::instance()->ReadFromNativeStorage();
     if (parser.isSet(driverOption)) {
@@ -74,6 +79,15 @@ int main(int argc, char *argv[])
             ProgramSettings::instance()->setAudioDeviceName(s);
         } else {
             fputs("Wrong Device Name.\n", stderr);
+            parser.showHelp(1);
+        }
+    }
+    if (parser.isSet(sndLibOption)) {
+        int s = parser.value(sndLibOption).toInt();
+        if (s >= 1 && s <= 2) {
+            ProgramSettings::instance()->setSoundLib(s);
+        } else {
+            fputs("Wrong sound library type.\n", stderr);
             parser.showHelp(1);
         }
     }
