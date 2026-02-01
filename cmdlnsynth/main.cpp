@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
     QCommandLineOption chorusOption({"c", "chorus"}, "Chorus type (none=-1,presets=0,1,2,3).", "chorus_type", "-1");
     QCommandLineOption levelOption({"l", "level"}, "Chorus level (0..32765).", "chorus_level", "0");
     QCommandLineOption deviceOption({"a", "audiodevice"}, "Audio Device Name", "device_name", "default");
-    QCommandLineOption sndLibOption({"s", "soundlib"},
+    QCommandLineOption sndLibOption({"S", "soundlib"},
                                     "Sound Library (1=WT, 2=FM)",
                                     "sound_lib",
                                     "1");

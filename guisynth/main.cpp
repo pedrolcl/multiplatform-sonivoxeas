@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
     parser.addHelpOption();
     QCommandLineOption driverOption({"d", "driver"}, "MIDI Driver.", "driver");
     QCommandLineOption portOption({"p", "port"}, "MIDI Port.", "port");
-    QCommandLineOption listOption({"s", "subs"}, "List available MIDI Ports.");
+    QCommandLineOption listOption({"l", "listsubs"}, "List available MIDI Ports.");
     QCommandLineOption bufferOption({"b", "buffer"}, "Audio buffer time in milliseconds", "bufer_time", "100");
     QCommandLineOption deviceOption({"a", "audiodevice"}, "Audio Device Name", "device_name", "default");
     QCommandLineOption sndLibOption({"s", "soundlib"},
