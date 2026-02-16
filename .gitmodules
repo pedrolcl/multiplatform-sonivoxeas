@@ -1,5 +1,5 @@
 [submodule "sonivox"]
 	path = sonivox
-	url = git@github.com:pedrolcl/sonivox.git
-	branch = devel
+	url = git@github.com:EmbeddedSynth/sonivox.git
+	branch = master
 
