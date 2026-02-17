@@ -9,8 +9,8 @@ on:
 
 env:
   BUILD_TYPE: RelWithDebInfo
+  INSTALL_LOCATION: SonivoxEAS
   DRUMSTICK: DrumstickV2
-  SONIVOX: SonivoxV4
 
 jobs:
   build:
@@ -41,26 +41,15 @@ jobs:
           toolchain:p
           cmake:p
           ninja:p
+          nsis:p
           qt6-base:p
           qt6-tools:p
           qt6-translations:p
           qt6-multimedia:p
+          sonivox:p
 
     - name: '${{ matrix.icon }} Checkout'
       uses: actions/checkout@v4
-
-    - name: '${{ matrix.icon }} Download Sonivox'
-      uses: dawidd6/action-download-artifact@v11
-      with:
-        name: ${{env.SONIVOX}}-msys2-${{matrix.sys}}
-        github_token: ${{secrets.GH_PAT}}
-        repo: EmbeddedSynth/sonivox
-        allow_forks: false
-        workflow: win-msys2.yml
-        branch: devel
-
-    - name: '${{ matrix.icon }} Extract Sonivox'
-      run: tar xvf ${{env.SONIVOX}}.tar
 
     - name: '${{ matrix.icon }} Download Drumstick'
       uses: dawidd6/action-download-artifact@v11
@@ -76,7 +65,24 @@ jobs:
       run: tar xvf ${{env.DRUMSTICK}}.tar
 
     - name: '${{ matrix.icon }} Configure CMake'
-      run: cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_PREFIX_PATH="${{env.DRUMSTICK}};${{env.SONIVOX}}"
+      id: configuration
+      run: >
+        cmake -B build
+        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+        -DCMAKE_PREFIX_PATH="${{env.DRUMSTICK}}"
+        -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_LOCATION}}
+        -DDEPENDENCY_DIRS="${{env.DRUMSTICK}}"
 
     - name: '${{ matrix.icon }} Build'
       run: cmake --build build --config ${{env.BUILD_TYPE}}
+
+    - name: '${{ matrix.icon }} Package'
+      run: cmake --build build --target package
+
+    - name: '${{ matrix.icon }} Upload artifact'
+      uses: actions/upload-artifact@v6
+      with:
+        name: windows-installer
+        path: ${{github.workspace}}/build/sonivoxeas-${{steps.configuration.outputs.config_version}}-${{matrix.sys}}.exe
+        retention-days: 90
+        overwrite: true

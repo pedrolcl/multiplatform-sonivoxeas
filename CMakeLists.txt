@@ -1,12 +1,14 @@
 cmake_minimum_required(VERSION 3.21)
+
 project( multiplatform_sonivoxeas
-         VERSION 2.2.0
+         VERSION 2.2.1
+         LANGUAGES CXX
          DESCRIPTION "Multiplatform Sonivox EAS for Qt" )
 
 include(GNUInstallDirs)
 
 option(USE_QT5 "Choose Qt5 instead of the default Qt6" OFF)
-option(INSTALL_DEPLOY "Deploy Dependencies at Install" OFF)
+option(INSTALL_DEPENDENCIES "Deploy Dependencies at Install" OFF)
 
 if (USE_QT5)
     set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -50,7 +52,7 @@ add_subdirectory(libsvoxeas)
 add_subdirectory(cmdlnsynth)
 add_subdirectory(guisynth)
 
-if (INSTALL_DEPLOY AND NOT USE_QT5)
+if (INSTALL_DEPENDENCIES AND NOT USE_QT5)
     qt_generate_deploy_app_script(
         TARGET mp_guisynth
         OUTPUT_SCRIPT deploy_script
@@ -60,7 +62,7 @@ if (INSTALL_DEPLOY AND NOT USE_QT5)
     install(SCRIPT ${deploy_script} COMPONENT sonivoxeas_runtime)
 endif()
 
-if(INSTALL_DEPLOY)
+if(INSTALL_DEPENDENCIES)
     # MIDI input plugins from Drumstick::RT
     get_target_property(_prop Drumstick::drumstick-rt-net-in LOCATION)
     list(APPEND PLUGINS ${_prop})
@@ -95,6 +97,13 @@ if(INSTALL_DEPLOY)
             DIRECTORIES ${CMAKE_CURRENT_BINARY_DIR} ${DEPENDENCY_DIRS}
         )
     endif()
+endif()
+
+if (DEFINED ENV{GITHUB_OUTPUT})
+    file(APPEND
+        "$ENV{GITHUB_OUTPUT}"
+        "config_version=${PROJECT_VERSION}\n"
+    )
 endif()
 
 # CPack support
