@@ -14,16 +14,16 @@ env:
 
 jobs:
   build:
-    runs-on: windows-latest
     strategy:
         fail-fast: false
         matrix:
           include:
             # { icon: '⬛', sys: mingw32 } # There are no 32 bit packages for Qt6 in msys2 anymore
-            - { icon: '🟦', sys: mingw64 }
-            - { icon: '🟨', sys: ucrt64  }
-            - { icon: '🟧', sys: clang64 }
-            - { icon: '🟩', sys: clangarm64 }
+            - { icon: '🟦', sys: mingw64,    os: windows-latest }
+            - { icon: '🟨', sys: ucrt64,     os: windows-latest }
+            - { icon: '🟧', sys: clang64,    os: windows-latest }
+            - { icon: '🟩', sys: clangarm64, os: windows-11-arm }
+    runs-on: ${{ matrix.os }}
     name: 🚧${{ matrix.icon }} ${{ matrix.sys }}
     defaults:
       run:
@@ -78,6 +78,7 @@ jobs:
         -DCMAKE_PREFIX_PATH="${{env.DRUMSTICK}}"
         -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_LOCATION}}
         -DDEPENDENCY_DIRS="${{env.DRUMSTICK}}"
+        -DINSTALL_DEPENDENCIES=ON
 
     - name: '${{ matrix.icon }} Build'
       run: cmake --build build --config ${{env.BUILD_TYPE}}
