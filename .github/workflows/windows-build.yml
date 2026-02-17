@@ -43,12 +43,16 @@ jobs:
           toolchain:p
           cmake:p
           ninja:p
-          nsis:p
           qt6-base:p
           qt6-tools:p
           qt6-translations:p
           qt6-multimedia:p
           sonivox:p
+
+    - name: '${{ matrix.icon }} Install NSIS'
+      uses: repolevedavaj/install-nsis@v1.1.0
+      with:
+        nsis-version: '3.11'
 
     - name: '${{ matrix.icon }} Checkout'
       uses: actions/checkout@v4
