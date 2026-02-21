@@ -58,7 +58,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_ui->spinOctave, SIGNAL(valueChanged(int)), this, SLOT(octaveChanged(int)));
     connect(m_ui->spinPgm, SIGNAL(valueChanged(int)), this, SLOT(programChanged(int)));
     connect(m_ui->volumeSlider, &QSlider::valueChanged, this, &MainWindow::volumeChanged);
-    connect(m_ui->dial_Reverb, &QDial::valueChanged, this, &MainWindow::reverbChanged);
+    connect(m_ui->gainSlider, &QSlider::valueChanged, this, &MainWindow::gainChanged);
+    connect(m_ui->dial_ReverbDry, &QDial::valueChanged, this, &MainWindow::reverbDryChanged);
+    connect(m_ui->dial_ReverbWet, &QDial::valueChanged, this, &MainWindow::reverbWetChanged);
     connect(m_ui->dial_Chorus, &QDial::valueChanged, this, &MainWindow::chorusChanged);
     connect(m_ui->openSMFButton, &QToolButton::clicked, this, &MainWindow::openMIDIFile);
     connect(m_ui->openDLSButton, &QToolButton::clicked, this, &MainWindow::openSoundfont);
@@ -73,6 +75,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_synth, &SynthController::underrunDetected, this, &MainWindow::underrunMessage);
     connect(m_synth, &SynthController::stallDetected, this, &MainWindow::stallMessage);
     connect(m_synth, &SynthController::synthStarted, this, &MainWindow::initializeSynth);
+    connect(m_synth, &SynthController::chorusLevelChanged, this, &MainWindow::setChorusLevel);
+    connect(m_synth, &SynthController::reverbDryChanged, this, &MainWindow::setReverbDry);
+    connect(m_synth, &SynthController::reverbWetChanged, this, &MainWindow::setReverbWet);
+    connect(m_synth, &SynthController::gainChanged, this, &MainWindow::setGain);
 
     updateState(EmptyState);
     adjustSize();
@@ -91,7 +97,7 @@ MainWindow::initializeSynth()
     m_ui->spinBuffer->setValue(ProgramSettings::instance()->bufferTime());
     int reverb = m_ui->combo_Reverb->findData(ProgramSettings::instance()->reverbType());
     m_ui->combo_Reverb->setCurrentIndex(reverb);
-    m_ui->dial_Reverb->setValue(ProgramSettings::instance()->reverbWet()); //0..32765
+    m_ui->dial_ReverbWet->setValue(ProgramSettings::instance()->reverbWet()); //0..32765
     int chorus = m_ui->combo_Chorus->findData(ProgramSettings::instance()->chorusType());
     m_ui->combo_Chorus->setCurrentIndex(chorus);
     m_ui->dial_Chorus->setValue(ProgramSettings::instance()->chorusLevel());
@@ -146,13 +152,18 @@ MainWindow::reverbTypeChanged(int index)
     m_synth->initReverb(value);
     ProgramSettings::instance()->setReverbType(value);
     if (value < 0) {
-        m_ui->dial_Reverb->setValue(0);
+        m_synth->setReverbDry(0);
+        m_synth->setReverbWet(0);
+        m_ui->lblDryVal->setNum(0);
+        m_ui->lblWetVal->setNum(0);
+        m_ui->dial_ReverbDry->setValue(0);
+        m_ui->dial_ReverbWet->setValue(0);
+        ProgramSettings::instance()->setReverbDry(0);
         ProgramSettings::instance()->setReverbWet(0);
     }
 }
 
-void
-MainWindow::reverbChanged(int value)
+void MainWindow::reverbWetChanged(int value)
 {
     m_ui->lblWetVal->setNum(value);
     m_synth->setReverbWet(value);
@@ -166,9 +177,18 @@ MainWindow::chorusTypeChanged(int index)
     m_synth->initChorus(value);
     ProgramSettings::instance()->setChorusType(value);
     if (value < 0) {
+        m_synth->setChorusLevel(0);
+        m_ui->lblLevelVa->setNum(0);
         m_ui->dial_Chorus->setValue(0);
         ProgramSettings::instance()->setChorusLevel(0);
     }
+}
+
+void MainWindow::reverbDryChanged(int value)
+{
+    m_ui->lblDryVal->setNum(value);
+    m_synth->setReverbDry(value);
+    ProgramSettings::instance()->setReverbDry(value);
 }
 
 void
@@ -177,6 +197,30 @@ MainWindow::chorusChanged(int value)
     m_ui->lblLevelVa->setNum(value);
     m_synth->setChorusLevel(value);
     ProgramSettings::instance()->setChorusLevel(value);
+}
+
+void MainWindow::setReverbDry(int value)
+{
+    m_ui->lblDryVal->setNum(value);
+    m_ui->dial_ReverbDry->setValue(value);
+}
+
+void MainWindow::setReverbWet(int value)
+{
+    m_ui->lblWetVal->setNum(value);
+    m_ui->dial_ReverbWet->setValue(value);
+}
+
+void MainWindow::setChorusLevel(int value)
+{
+    m_ui->lblLevelVa->setNum(value);
+    m_ui->dial_Chorus->setValue(value);
+}
+
+void MainWindow::setGain(int value)
+{
+    qDebug() << Q_FUNC_INFO << value;
+    m_ui->gainSlider->setValue(value);
 }
 
 void MainWindow::deviceChanged(int value)
@@ -213,6 +257,12 @@ void MainWindow::volumeChanged(int value)
     //qDebug() << Q_FUNC_INFO << value;
     m_synth->setVolume(value);
     ProgramSettings::instance()->setVolumeLevel(value);
+}
+
+void MainWindow::gainChanged(int value)
+{
+    m_synth->setGain(value);
+    ProgramSettings::instance()->setGain(value);
 }
 
 void MainWindow::programChanged(int value)

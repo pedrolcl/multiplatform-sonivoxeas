@@ -266,6 +266,7 @@ void SynthController::restart()
 {
     stop();
     start();
+    emit gainChanged(m_renderer->getGain());
 }
 
 const QString SynthController::midiDriver() const
@@ -314,6 +315,8 @@ void SynthController::initReverb(int reverb_type)
 {
     if (m_renderer) {
         m_renderer->initReverb(reverb_type);
+        emit reverbDryChanged(m_renderer->getReverbDry());
+        emit reverbWetChanged(m_renderer->getReverbWet());
     }
 }
 
@@ -321,6 +324,7 @@ void SynthController::initChorus(int chorus_type)
 {
     if (m_renderer) {
         m_renderer->initChorus(chorus_type);
+        emit chorusLevelChanged(m_renderer->getChorusLevel());
     }
 }
 
@@ -328,6 +332,13 @@ void SynthController::initSoundLib(int value)
 {
     if (m_renderer) {
         m_renderer->initSoundLib(value);
+    }
+}
+
+void SynthController::setReverbDry(int amount)
+{
+    if (m_renderer) {
+        m_renderer->setReverbDry(amount);
     }
 }
 
@@ -342,6 +353,13 @@ void SynthController::setChorusLevel(int amount)
 {
     if (m_renderer) {
         m_renderer->setChorusLevel(amount);
+    }
+}
+
+void SynthController::setGain(int amount)
+{
+    if (m_renderer) {
+        m_renderer->setGain(amount);
     }
 }
 

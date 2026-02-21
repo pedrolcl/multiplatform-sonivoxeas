@@ -41,6 +41,9 @@ public:
     int reverbWet() const;
     void setReverbWet(int reverbWet);
 
+    int reverbDry() const;
+    void setReverbDry(int reverbDry);
+
     int chorusType() const;
     void setChorusType(int chorusType);
 
@@ -49,6 +52,9 @@ public:
 
     int volumeLevel() const;
     void setVolumeLevel(int newVolumeLevel);
+
+    int gain() const;
+    void setGain(int newGain);
 
     const QString &audioDeviceName() const;
     void setAudioDeviceName(const QString &newAudioDeviceName);
@@ -66,11 +72,13 @@ public:
     static const QString DEFAULT_AUDIO_DEVICE;
     static const int DEFAULT_BUFFER_TIME;
     static const int DEFAULT_REVERB_TYPE;
+    static const int DEFAULT_REVERB_DRY;
     static const int DEFAULT_REVERB_WET;
     static const int DEFAULT_CHORUS_TYPE;
     static const int DEFAULT_CHORUS_LEVEL;
     static const int DEFAULT_VOLUME_LEVEL;
     static const int DEFAULT_SOUND_LIB;
+    static const int DEFAULT_GAIN;
 
     int soundLib() const;
     void setSoundLib(int newSoundLib);
@@ -94,10 +102,12 @@ private:
     QString m_portName;
     int m_bufferTime;
     int m_reverbType;
+    int m_reverbDry;
     int m_reverbWet;
     int m_chorusType;
     int m_chorusLevel;
     int m_volumeLevel;
+    int m_gain;
     QString m_audioDeviceName;
     QString m_Soundfont;
     int m_soundLib;

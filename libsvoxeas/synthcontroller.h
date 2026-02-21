@@ -62,8 +62,10 @@ public:
     void initReverb(int reverb_type);
     void initChorus(int chorus_type);
     void initSoundLib(int);
+    void setReverbDry(int amount);
     void setReverbWet(int amount);
     void setChorusLevel(int amount);
+    void setGain(int amount);
     void initSoundfont(const QString soundfont);
     void playFile(const QString fileName);
     void startPlayback(const QString fileName);
@@ -85,6 +87,10 @@ signals:
     void playbackStopped();
     void playbackTime(int time);
     void synthStarted();
+    void gainChanged(int value);
+    void reverbDryChanged(int value);
+    void reverbWetChanged(int value);
+    void chorusLevelChanged(int value);
 
 private:
     void initAudio();

@@ -2,15 +2,15 @@ name: Windows MSVC CI
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ "master", "devel" ]
-  pull_request:
-    branches: [ "master", "devel" ]
+# push:
+#   branches: [ "master", "devel" ]
+# pull_request:
+#   branches: [ "master", "devel" ]
 
 env:
   BUILD_TYPE: RelWithDebInfo
   INSTALL_LOCATION: ${{github.workspace}}/SonivoxEAS
-  DRUMSTICK: ${{github.workspace}}/DrumstickV2
+  DRUMSTICK: DrumstickV2
 
 jobs:
   build:
@@ -25,6 +25,19 @@ jobs:
 
     steps:
     - uses: actions/checkout@v6
+
+    - name: '${{ matrix.icon }} Download Drumstick'
+      uses: dawidd6/action-download-artifact@v11
+      with:
+        name: ${{env.DRUMSTICK}}-${{matrix.arch}}
+        github_token: ${{secrets.GH_PAT}}
+        repo: pedrolcl/drumstick
+        allow_forks: false
+        workflow: cmake-win.yml
+        branch: devel
+
+    - name: '${{ matrix.icon }} Extract Drumstick'
+      run: tar xvf ${{env.DRUMSTICK}}.tar
 
     - name: '${{ matrix.icon }} Build vcpkg'
       uses: johnwason/vcpkg-action@v7
@@ -50,10 +63,10 @@ jobs:
         cmake ${{ steps.vcpkg.outputs.vcpkg-cmake-config }}
         -G Ninja -B ${{github.workspace}}/build
         -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
-        -DCMAKE_PREFIX_PATH=${{env.DRUMSTICK}};${{github.workspace}}/vcpkg/installed/${{matrix.triplet}}
+        -DCMAKE_PREFIX_PATH=${{github.workspace}}/${{env.DRUMSTICK}};${{github.workspace}}/vcpkg/installed/${{matrix.triplet}}
         -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_LOCATION}}
         -DCPACK_SYSTEM_NAME=${{matrix.arch}}
-        -DDEPENDENCY_DIRS=${{github.workspace}}/vcpkg/installed/${{matrix.triplet}}/bin;${{env.DRUMSTICK}}/lib
+        -DDEPENDENCY_DIRS=${{github.workspace}}/vcpkg/installed/${{matrix.triplet}}/bin;${{github.workspace}}/${{env.DRUMSTICK}}/lib
         -DINSTALL_DEPENDENCIES=ON
 
     - name: '${{ matrix.icon }} Build'

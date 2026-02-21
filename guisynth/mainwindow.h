@@ -55,13 +55,19 @@ protected:
 private slots:
     void reverbTypeChanged(int index);
     void chorusTypeChanged(int index);
-    void reverbChanged(int value);
+    void reverbDryChanged(int value);
+    void reverbWetChanged(int value);
     void chorusChanged(int value);
+    void setReverbDry(int value);
+    void setReverbWet(int value);
+    void setChorusLevel(int value);
+    void setGain(int value);
     void deviceChanged(int value);
     void subscriptionChanged(int value);
     void bufferSizeChanged(int value);
     void octaveChanged(int value);
     void volumeChanged(int value);
+    void gainChanged(int value);
     void programChanged(int value);
     void sndLibChanged(int value);
     void songStopped();

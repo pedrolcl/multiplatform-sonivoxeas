@@ -58,12 +58,18 @@ public:
     void initReverb(int reverb_type);
     void initChorus(int chorus_type);
     void initSoundLib(int sound_lib);
+    void setGain(int amount);
+    void setReverbDry(int amount);
     void setReverbWet(int amount);
     void setChorusLevel(int amount);
     void initSoundfont(const QString soundfont);
     void playFile(const QString fileName);
     void startPlayback(const QString fileName);
     void stopPlayback();
+    int getGain();
+    int getReverbDry();
+    int getReverbWet();
+    int getChorusLevel();
 
     /* Qt Multimedia */
     const QAudioFormat &format() const;

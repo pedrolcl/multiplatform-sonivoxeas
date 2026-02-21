@@ -497,13 +497,36 @@ void SynthRenderer::initSoundLib(int sound_lib)
     }
 }
 
+void SynthRenderer::setGain(int amount)
+{
+    EAS_RESULT eas_res = EAS_SetVolume(m_easData, NULL, amount);
+    if (eas_res != EAS_SUCCESS) {
+        qWarning() << "EAS_SetVolume error:" << eas_res;
+    }
+}
+
+void SynthRenderer::setReverbDry(int amount)
+{
+    //qDebug() << Q_FUNC_INFO;
+    EAS_RESULT eas_res = EAS_SetParameter(m_easData,
+                                          EAS_MODULE_REVERB,
+                                          EAS_PARAM_REVERB_DRY,
+                                          (EAS_I32) amount);
+    if (eas_res != EAS_SUCCESS) {
+        qWarning() << "EAS_SetParameter REVERB_DRY error:" << eas_res;
+    }
+}
+
 void
 SynthRenderer::setReverbWet(int amount)
 {
     //qDebug() << Q_FUNC_INFO;
-    EAS_RESULT eas_res = EAS_SetParameter(m_easData, EAS_MODULE_REVERB, EAS_PARAM_REVERB_WET, (EAS_I32) amount);
+    EAS_RESULT eas_res = EAS_SetParameter(m_easData,
+                                          EAS_MODULE_REVERB,
+                                          EAS_PARAM_REVERB_WET,
+                                          (EAS_I32) amount);
     if (eas_res != EAS_SUCCESS) {
-        qWarning() << "EAS_SetParameter error:" << eas_res;
+        qWarning() << "EAS_SetParameter REVERB_WET error:" << eas_res;
     }
 }
 
@@ -511,9 +534,12 @@ void
 SynthRenderer::setChorusLevel(int amount)
 {
     //qDebug() << Q_FUNC_INFO;
-    EAS_RESULT eas_res = EAS_SetParameter(m_easData, EAS_MODULE_CHORUS, EAS_PARAM_CHORUS_LEVEL, (EAS_I32) amount);
+    EAS_RESULT eas_res = EAS_SetParameter(m_easData,
+                                          EAS_MODULE_CHORUS,
+                                          EAS_PARAM_CHORUS_LEVEL,
+                                          (EAS_I32) amount);
     if (eas_res != EAS_SUCCESS) {
-        qWarning() << "EAS_SetParameter error:" << eas_res;
+        qWarning() << "EAS_SetParameter CHORUS_LEVEL error:" << eas_res;
     }
 }
 
@@ -610,7 +636,7 @@ SynthRenderer::getPlaybackLocation()
     /* get the current time */
     if ((result = EAS_GetLocation(m_easData, m_fileHandle, &playTime)) != EAS_SUCCESS)
     {
-        qWarning() << Q_FUNC_INFO << "EAS_GetLocation" << result;
+        qWarning() << Q_FUNC_INFO << "EAS_GetLocation. result=" << result;
     }
     //qDebug() << Q_FUNC_INFO << playTime;
     return playTime;
@@ -634,4 +660,42 @@ SynthRenderer::stopPlayback()
     if (!stopped()) {
         closePlayback();
     }
+}
+
+int SynthRenderer::getGain()
+{
+    return EAS_GetVolume(m_easData, NULL);
+}
+
+int SynthRenderer::getReverbDry()
+{
+    EAS_I32 param = 0;
+    EAS_RESULT result = EAS_GetParameter(m_easData, EAS_MODULE_REVERB, EAS_PARAM_REVERB_DRY, &param);
+    if (result != EAS_SUCCESS) {
+        qWarning() << Q_FUNC_INFO << "EAS_GetParameter REVERB_DRY. result=" << result;
+    }
+    return param;
+}
+
+int SynthRenderer::getReverbWet()
+{
+    EAS_I32 param = 0;
+    EAS_RESULT result = EAS_GetParameter(m_easData, EAS_MODULE_REVERB, EAS_PARAM_REVERB_WET, &param);
+    if (result != EAS_SUCCESS) {
+        qWarning() << Q_FUNC_INFO << "EAS_GetParameter REVERB_WET. result=" << result;
+    }
+    return param;
+}
+
+int SynthRenderer::getChorusLevel()
+{
+    EAS_I32 param = 0;
+    EAS_RESULT result = EAS_GetParameter(m_easData,
+                                         EAS_MODULE_CHORUS,
+                                         EAS_PARAM_CHORUS_LEVEL,
+                                         &param);
+    if (result != EAS_SUCCESS) {
+        qWarning() << Q_FUNC_INFO << "EAS_GetParameter CHORUS_LEVEL. result=" << result;
+    }
+    return param;
 }
