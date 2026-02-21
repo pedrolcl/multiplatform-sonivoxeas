@@ -56,12 +56,22 @@ add_subdirectory(cmdlnsynth)
 add_subdirectory(guisynth)
 
 if (INSTALL_DEPENDENCIES AND NOT USE_QT5)
-    qt_generate_deploy_app_script(
-        TARGET mp_guisynth
-        OUTPUT_SCRIPT deploy_script
-        NO_UNSUPPORTED_PLATFORM_ERROR
-        NO_COMPILER_RUNTIME
-    )
+    if(MSVC)
+        qt_generate_deploy_app_script(
+            TARGET mp_guisynth
+            OUTPUT_SCRIPT deploy_script
+            NO_UNSUPPORTED_PLATFORM_ERROR
+            NO_COMPILER_RUNTIME
+        )
+        set(CMAKE_INSTALL_SYSTEM_RUNTIME_COMPONENT sonivoxeas_runtime)
+        include ( InstallRequiredSystemLibraries )
+    else()
+        qt_generate_deploy_app_script(
+            TARGET mp_guisynth
+            OUTPUT_SCRIPT deploy_script
+            NO_UNSUPPORTED_PLATFORM_ERROR
+        )
+    endif()
     install(SCRIPT ${deploy_script} COMPONENT sonivoxeas_runtime)
 endif()
 
@@ -126,7 +136,6 @@ set ( CPACK_SOURCE_PACKAGE_FILE_NAME "sonivoxeas-${PROJECT_VERSION}" )
 set ( CPACK_SOURCE_STRIP_FILES OFF )
 
 # binary packages
-include ( InstallRequiredSystemLibraries )
 set ( CPACK_PACKAGE_NAME sonivoxeas )
 set ( CPACK_STRIP_FILES ON )
 
