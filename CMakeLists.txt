@@ -6,6 +6,7 @@ project( multiplatform_sonivoxeas
          DESCRIPTION "Multiplatform Sonivox EAS for Qt" )
 
 include(GNUInstallDirs)
+include(CMakePrintHelpers)
 
 option(USE_QT5 "Choose Qt5 instead of the default Qt6" OFF)
 option(INSTALL_DEPENDENCIES "Deploy Dependencies at Install" OFF)
@@ -36,12 +37,14 @@ endif()
 find_package(Drumstick 2.10 COMPONENTS RT Widgets REQUIRED)
 if (Drumstick_FOUND)
     message(STATUS "Drumstick v${Drumstick_VERSION} found")
+    cmake_print_properties(TARGETS Drumstick::RT PROPERTIES LOCATION)
 endif()
 
 set(sonivox_SHARED_LIBS TRUE)
 find_package(sonivox 4.0 CONFIG REQUIRED)
 if (sonivox_FOUND)
     message(STATUS "Sonivox v${sonivox_VERSION} found")
+    cmake_print_properties(TARGETS sonivox::sonivox PROPERTIES LOCATION)
 else()
     add_subdirectory(sonivox)
     include(CMakePrintHelpers)
@@ -63,6 +66,7 @@ if (INSTALL_DEPENDENCIES AND NOT USE_QT5)
 endif()
 
 if(INSTALL_DEPENDENCIES)
+    message(STATUS "DEPENDENCY_DIRS: ${DEPENDENCY_DIRS}")
     # MIDI input plugins from Drumstick::RT
     get_target_property(_prop Drumstick::drumstick-rt-net-in LOCATION)
     list(APPEND PLUGINS ${_prop})
@@ -82,14 +86,14 @@ if(INSTALL_DEPENDENCIES)
 
     if (CMAKE_SYSTEM_NAME MATCHES "Linux")
         # AppDir symlinks
-        install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_INSTALL_PREFIX}/bin/mp_guisynth ${CMAKE_INSTALL_PREFIX}/../AppRun)"
+        string(REPLACE "/" "" RELPREF ${CMAKE_INSTALL_PREFIX})
+        install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${RELPREF}/${CMAKE_INSTALL_BINDIR}/mp_guisynth $ENV{DESTDIR}/AppRun)"
             COMPONENT sonivoxeas_runtime)
-        install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_INSTALL_PREFIX}/share/applications/sonivoxeas.desktop ${CMAKE_INSTALL_PREFIX}/../sonivoxeas.desktop)"
+        install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${RELPREF}/${CMAKE_INSTALL_DATAROOTDIR}/applications/sonivoxeas.desktop $ENV{DESTDIR}/sonivoxeas.desktop)"
             COMPONENT sonivoxeas_runtime)
-        install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/512x512/apps/sonivoxeas.png ${CMAKE_INSTALL_PREFIX}/../sonivoxeas.png)"
+        install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${RELPREF}/${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/512x512/apps/sonivoxeas.png $ENV{DESTDIR}/sonivoxeas.png)"
             COMPONENT sonivoxeas_runtime)
     else()
-        message(STATUS "DEPENDENCY_DIRS: ${DEPENDENCY_DIRS}")
         install(RUNTIME_DEPENDENCY_SET sonivoxeas-dependencies
             COMPONENT sonivoxeas_runtime
             PRE_INCLUDE_REGEXES .*zlib.* .*sonivox.* .*drumstick.*
