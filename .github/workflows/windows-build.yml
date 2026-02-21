@@ -69,7 +69,7 @@ jobs:
 
     - name: '${{ matrix.icon }} Convert Drumstick location'
       id: cnv
-      run: echo "dependencies=$(cygpath -m $MSYSTEM_PREFIX/bin);$(cygpath -m '${{github.workspace}}/${{env.DRUMSTICK}}/bin)'" >> $GITHUB_OUTPUT
+      run: echo "dependencies=$(cygpath -m $MSYSTEM_PREFIX/bin);$(cygpath -m '${{github.workspace}}/${{env.DRUMSTICK}}/bin')" >> $GITHUB_OUTPUT
 
     - name: '${{ matrix.icon }} Extract Drumstick'
       run: tar xvf ${{env.DRUMSTICK}}.tar
