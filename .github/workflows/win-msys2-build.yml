@@ -1,4 +1,4 @@
-name: Build on Windows with MSYS2
+name: Windows MSYS2 CI
 
 on:
   push:
