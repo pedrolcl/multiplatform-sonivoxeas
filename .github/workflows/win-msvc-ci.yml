@@ -71,7 +71,7 @@ jobs:
         -DCMAKE_PREFIX_PATH=${{github.workspace}}/${{env.DRUMSTICK}};${{github.workspace}}/vcpkg/installed/${{matrix.triplet}}
         -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_LOCATION}}
         -DCPACK_SYSTEM_NAME=${{matrix.arch}}
-        -DDEPENDENCY_DIRS=${{github.workspace}}/vcpkg/installed/${{matrix.triplet}}/bin;${{github.workspace}}/${{env.DRUMSTICK}}/bin
+        -DDEPENDENCY_DIRS="${{github.workspace}}/vcpkg/installed/${{matrix.triplet}}/bin;${{github.workspace}}/${{env.DRUMSTICK}}/bin"
         -DINSTALL_DEPENDENCIES=ON
 
     - name: '${{ matrix.icon }} Build'

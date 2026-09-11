@@ -20,8 +20,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { icon: '🟥', arch: "x86_64", os: "ubuntu-24.04", triplet: "x64-linux-dynamic", qtarch: "linux_gcc_64" }
-          - { icon: '🟩', arch: "aarch64", os: "ubuntu-24.04-arm", triplet: "arm64-linux-dynamic", qtarch: "linux_gcc_arm64" }
+          - { icon: '🟥', arch: "x86_64", os: "ubuntu-24.04", triplet: "x64-linux-dynamic", qtarch: "linux_gcc_64", arch2: "x64" }
+          - { icon: '🟩', arch: "aarch64", os: "ubuntu-24.04-arm", triplet: "arm64-linux-dynamic", qtarch: "linux_gcc_arm64", arch2: "arm64" }
     runs-on: ${{ matrix.os }}
     name: 'Linux ${{ matrix.arch }}'
 
@@ -32,7 +32,7 @@ jobs:
 
     - uses: dawidd6/action-download-artifact@v24
       with:
-        name: ${{env.SONIVOXNAME}}-Linux-x64-r44s16
+        name: ${{env.SONIVOXNAME}}-Linux-${{matrix.arch2}}-r44s16
         github_token: ${{secrets.GH_PAT}}
         repo: EmbeddedSynth/sonivox
         allow_forks: false
