@@ -2,10 +2,10 @@ name: Windows MSVC CI
 
 on:
   workflow_dispatch:
-# push:
-#   branches: [ "master", "devel" ]
-# pull_request:
-#   branches: [ "master", "devel" ]
+  push:
+    branches: [ "master", "devel" ]
+  pull_request:
+    branches: [ "master", "devel" ]
 
 env:
   BUILD_TYPE: RelWithDebInfo
@@ -18,42 +18,50 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { icon: '🟦', arch: "win64", os: "windows-latest", triplet: "x64-windows" }
-          - { icon: '🟩', arch: "arm64", os: "windows-11-arm", triplet: "arm64-windows" }
+          - { icon: '🟦', arch: "win64", os: "windows-latest", triplet: "x64-windows", qtarch: 'win64_msvc2022_64' }
+          - { icon: '🟩', arch: "arm64", os: "windows-11-arm", triplet: "arm64-windows", qtarch: 'win64_msvc2022_arm64' }
     runs-on: ${{ matrix.os }}
     name: 🚧${{ matrix.icon }} msvc ${{ matrix.arch }}
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
 
     - name: '${{ matrix.icon }} Download Drumstick'
-      uses: dawidd6/action-download-artifact@v11
+      uses: dawidd6/action-download-artifact@v24
       with:
-        name: ${{env.DRUMSTICK}}-${{matrix.arch}}
+        name: ${{env.DRUMSTICK}}-msvc-${{matrix.arch}}
         github_token: ${{secrets.GH_PAT}}
         repo: pedrolcl/drumstick
         allow_forks: false
-        workflow: cmake-win.yml
+        workflow: win-msvc.yml
         branch: devel
 
     - name: '${{ matrix.icon }} Extract Drumstick'
       run: tar xvf ${{env.DRUMSTICK}}.tar
 
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v4
+      with:
+        arch: ${{matrix.qtarch}}
+        version: '6.10.3'
+        modules: qt5compat qtmultimedia
+
     - name: '${{ matrix.icon }} Build vcpkg'
       uses: johnwason/vcpkg-action@v7
       id: vcpkg
       with:
-        pkgs: zlib sonivox qtbase qtmultimedia qttools qttranslations
+        pkgs: zlib sonivox
         triplet: ${{ matrix.triplet }}
         token: ${{ github.token }}
 
+
     - name: '${{ matrix.icon }} Install NSIS'
-      uses: repolevedavaj/install-nsis@v1.1.0
+      uses: repolevedavaj/install-nsis@v1.3.0
       with:
-        nsis-version: '3.11'
+        nsis-version: '3.12'
 
     - name: '${{ matrix.icon }} Setup MSVC'
-      uses: ilammy/msvc-dev-cmd@v1
+      uses: TheMrMilchmann/setup-msvc-dev@v4
       with:
         arch: ${{ matrix.arch }}
 
@@ -66,7 +74,7 @@ jobs:
         -DCMAKE_PREFIX_PATH=${{github.workspace}}/${{env.DRUMSTICK}};${{github.workspace}}/vcpkg/installed/${{matrix.triplet}}
         -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_LOCATION}}
         -DCPACK_SYSTEM_NAME=${{matrix.arch}}
-        -DDEPENDENCY_DIRS=${{github.workspace}}/vcpkg/installed/${{matrix.triplet}}/bin;${{github.workspace}}/${{env.DRUMSTICK}}/lib
+        -DDEPENDENCY_DIRS=${{github.workspace}}/vcpkg/installed/${{matrix.triplet}}/bin;${{github.workspace}}/${{env.DRUMSTICK}}/bin
         -DINSTALL_DEPENDENCIES=ON
 
     - name: '${{ matrix.icon }} Build'
@@ -79,7 +87,7 @@ jobs:
       run: cmake --install ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 
     - name: '${{ matrix.icon }} Upload Artifacts'
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: SonivoxEAS-msvc-${{matrix.arch}}
         path: ${{env.INSTALL_LOCATION}}
@@ -87,9 +95,10 @@ jobs:
         overwrite: true
 
     - name: '${{ matrix.icon }} Upload Installer'
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: SonivoxEAS-msvc-installer-${{matrix.arch}}
         path: ${{github.workspace}}/build/sonivoxeas-${{steps.configuration.outputs.config_version}}-${{matrix.arch}}.exe
         retention-days: 90
         overwrite: true
+        archive: false
