@@ -44,12 +44,12 @@ jobs:
 
     - uses: dawidd6/action-download-artifact@v24
       with:
-      name: ${{env.DRUMSTICKNAME}}-${{matrix.arch}}.tar.gz
-      github_token: ${{secrets.GH_PAT}}
-      repo: pedrolcl/drumstick
-      workflow: linux.yml
-      skip_unpack: true
-      allow_forks: false
+        name: ${{env.DRUMSTICKNAME}}-${{matrix.arch}}.tar.gz
+        github_token: ${{secrets.GH_PAT}}
+        repo: pedrolcl/drumstick
+        workflow: linux.yml
+        skip_unpack: true
+        allow_forks: false
 
     - name: Extract downloaded artifact
       run: tar xvzf ${{env.DRUMSTICKNAME}}-${{matrix.arch}}.tar.gz

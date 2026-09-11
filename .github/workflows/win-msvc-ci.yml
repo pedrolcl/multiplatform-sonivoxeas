@@ -35,9 +35,7 @@ jobs:
         allow_forks: false
         workflow: win-msvc.yml
         branch: devel
-
-    - name: '${{ matrix.icon }} Extract Drumstick'
-      run: tar xvf ${{env.DRUMSTICK}}.tar
+        path: ${{env.DRUMSTICK}}
 
     - name: Install Qt
       uses: jurplel/install-qt-action@v4
@@ -53,7 +51,6 @@ jobs:
         pkgs: zlib sonivox
         triplet: ${{ matrix.triplet }}
         token: ${{ github.token }}
-
 
     - name: '${{ matrix.icon }} Install NSIS'
       uses: repolevedavaj/install-nsis@v1.3.0
