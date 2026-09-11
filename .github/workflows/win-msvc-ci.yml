@@ -45,7 +45,7 @@ jobs:
         modules: qt5compat qtmultimedia
 
     - name: '${{ matrix.icon }} Build vcpkg'
-      uses: johnwason/vcpkg-action@v7
+      uses: johnwason/vcpkg-action@v8
       id: vcpkg
       with:
         pkgs: zlib sonivox
