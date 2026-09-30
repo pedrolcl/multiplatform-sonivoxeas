@@ -133,6 +133,12 @@ if (INSTALL_DEPENDENCIES AND QT_VERSION VERSION_GREATER_EQUAL 6.5 )
         install(IMPORTED_RUNTIME_ARTIFACTS Drumstick::Widgets
                 RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
                 LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+        if (${CMAKE_SYSTEM} MATCHES "Linux")
+            find_package(Drumstick 2.11 COMPONENTS ALSA REQUIRED)
+            install(IMPORTED_RUNTIME_ARTIFACTS Drumstick::ALSA
+                    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+                    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+        endif()
     else()
         message(WARNING "Drumstick package not found")
     endif()
