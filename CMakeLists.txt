@@ -154,12 +154,7 @@ if (INSTALL_DEPENDENCIES AND QT_VERSION VERSION_GREATER_EQUAL 6.5 )
         message(WARNING "Drumstick_DIR is not defined")
     endif()
 
-    set(_deploy_tool_options_arg "")
     if(WIN32)
-        set(_deploy_tool_options_arg "
-            --plugindir \".\"
-            --translationdir \".\"
-        ")
         set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION ${CMAKE_INSTALL_BINDIR})
     else()
         set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION ${CMAKE_INSTALL_LIBDIR})
@@ -172,7 +167,6 @@ if (INSTALL_DEPENDENCIES AND QT_VERSION VERSION_GREATER_EQUAL 6.5 )
             NO_UNSUPPORTED_PLATFORM_ERROR
             NO_COMPILER_RUNTIME
             NO_TRANSLATIONS
-            DEPLOY_TOOL_OPTIONS ${_deploy_tool_options_arg}
         )
         set(CMAKE_INSTALL_SYSTEM_RUNTIME_COMPONENT sonivoxeas_runtime)
         include ( InstallRequiredSystemLibraries )
