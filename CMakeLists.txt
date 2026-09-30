@@ -101,11 +101,31 @@ add_subdirectory(guisynth)
 if (INSTALL_DEPENDENCIES AND QT_VERSION VERSION_GREATER_EQUAL 6.5 )
     if (sonivox_FOUND)
         install(IMPORTED_RUNTIME_ARTIFACTS sonivox::sonivox
+                RUNTIME_DEPENDENCY_SET sonivox-dependencies
+                RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+                LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+        if(WIN32)
+          set(_pre_exclude api-ms ext-ms wpaxholder hvsi azureattest pdmutilities
+                           vcruntime msvcp concrt vccorlib ucrtbase )
+          set(_post_exclude [[.*(\\|/)system32(\\|/).*\.dll]])
+        elseif(APPLE)
+          set(_pre_exclude "/usr/lib" "/System/")
+          set(_post_exclude "")
+        else()
+          set(_pre_exclude "")
+          set(_post_exclude ".*/ld-linux-.*" ".*/linux-vdso.*" ".*/libm\\..*" ".*/libc\\..*" ".*/libpthread\\..*" ".*/libdl\\..*" ".*/libstdc\\+\\+\\..*" ".*/libgcc_s.*" ".*/libgomp\\..*" ".*/libQt.*")
+        endif()
+
+        install(RUNTIME_DEPENDENCY_SET sonivox-dependencies
+                PRE_EXCLUDE_REGEXES ${_pre_exclude}
+                POST_EXCLUDE_REGEXES ${_post_exclude}
                 RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
                 LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
     else()
         message(WARNING "Sonivox package not found")
     endif()
+
     if (Drumstick_FOUND)
         install(IMPORTED_RUNTIME_ARTIFACTS Drumstick::RT
                 RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
