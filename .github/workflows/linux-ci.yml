@@ -10,9 +10,9 @@ on:
 env:
   BUILD_TYPE: RelWithDebInfo
   DRUMSTICKNAME: DrumstickV2
-  SONIVOXNAME: SonivoxV4
+  # SONIVOXNAME: SonivoxV4
   DRUMSTICK_LOCATION: ${{github.workspace}}/DrumstickV2
-  SONIVOX_LOCATION: ${{github.workspace}}/SonivoxV4
+  # SONIVOX_LOCATION: ${{github.workspace}}/SonivoxV4
 
 jobs:
   build:
@@ -30,19 +30,20 @@ jobs:
       with:
         submodules: true
 
-    - uses: dawidd6/action-download-artifact@v24
-      with:
-        name: ${{env.SONIVOXNAME}}-Linux-${{matrix.arch2}}-r44s16
-        github_token: ${{secrets.GH_PAT}}
-        repo: EmbeddedSynth/sonivox
-        allow_forks: false
-        workflow: linux-ci.yml
-        branch: devel
+    # - uses: dawidd6/action-download-artifact@v24
+    #   with:
+    #     name: ${{env.SONIVOXNAME}}-Linux-${{matrix.arch2}}-r44s16
+    #     github_token: ${{secrets.GH_PAT}}
+    #     repo: EmbeddedSynth/sonivox
+    #     allow_forks: false
+    #     workflow: linux-ci.yml
+    #     branch: devel
 
-    - name: Extract downloaded files
-      run: tar xvf ${{env.SONIVOXNAME}}.tar
+    # - name: Extract downloaded files
+    #   run: tar xvf ${{env.SONIVOXNAME}}.tar
 
-    - uses: dawidd6/action-download-artifact@v24
+    - name: Download Drumstick
+      uses: dawidd6/action-download-artifact@v24
       with:
         name: ${{env.DRUMSTICKNAME}}-${{matrix.arch}}.tar.gz
         github_token: ${{secrets.GH_PAT}}
@@ -58,16 +59,56 @@ jobs:
       uses: jurplel/install-qt-action@v4
       with:
         arch: ${{matrix.qtarch}}
-        version: '6.11.1'
+        version: '6.11.2'
         modules: qt5compat qtmultimedia
 
-    - name: Dependencies
+    - name: Install dependencies
       run: sudo apt-get update && sudo apt-get install -yq pkg-config libasound2-dev
 
     - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build
+      id: configuration
+      run: >
+        cmake -B ${{github.workspace}}/build
         -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
-        -DCMAKE_PREFIX_PATH="${{env.DRUMSTICK_LOCATION}};${{env.SONIVOX_LOCATION}}"
+        -DCMAKE_PREFIX_PATH="${{env.DRUMSTICK_LOCATION}}"
+        -DCMAKE_INSTALL_PREFIX=/usr
+        -DCMAKE_INSTALL_LIBDIR=lib
+        -DCMAKE_INSTALL_RPATH="\$ORIGIN/../lib"
+        -DINSTALL_DEPENDENCIES=ON
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+
+    - name: Install
+      env:
+        DESTDIR: ${{github.workspace}}/build/multiplatform-sonivoxeas-v${{steps.configuration.outputs.config_version}}-${{matrix.arch}}.AppDir
+      run: cmake --install ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+
+    - name: Archive
+      env:
+        INSTALL_LOCATION: multiplatform-sonivoxeas-v${{steps.configuration.outputs.config_version}}-${{matrix.arch}}.AppDir
+      run: |
+        cd ${{github.workspace}}/build/
+        tar -cvzf ${{env.INSTALL_LOCATION}}.tar.gz ${{env.INSTALL_LOCATION}}
+
+    - name: 'Upload Archive'
+      env:
+        INSTALL_LOCATION: multiplatform-sonivoxeas-v${{steps.configuration.outputs.config_version}}-${{matrix.arch}}.AppDir
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{env.INSTALL_LOCATION}}
+        path: ${{github.workspace}}/build/${{env.INSTALL_LOCATION}}.tar.gz
+        retention-days: 90
+        overwrite: true
+        archive: false
+
+    - name: 'Upload AppImage'
+      env:
+        INSTALL_LOCATION: multiplatform-sonivoxeas-v${{steps.configuration.outputs.config_version}}-${{matrix.arch}}.AppImage
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{env.INSTALL_LOCATION}}
+        path: ${{github.workspace}}/build/${{env.INSTALL_LOCATION}}
+        retention-days: 90
+        overwrite: true
+        archive: false
