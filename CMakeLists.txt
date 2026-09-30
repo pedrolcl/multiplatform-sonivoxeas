@@ -75,7 +75,7 @@ if (Drumstick_FOUND)
 endif()
 
 set(sonivox_SHARED_LIBS TRUE)
-find_package(sonivox 4.0 CONFIG shared)
+find_package(sonivox 4.0 CONFIG)
 if (sonivox_FOUND)
     message(STATUS "Sonivox v${sonivox_VERSION} found")
     # include(CMakePrintHelpers)
