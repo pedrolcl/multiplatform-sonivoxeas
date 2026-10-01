@@ -51,6 +51,7 @@ protected:
     void closeEvent(QCloseEvent *ev) override;
     void dragEnterEvent(QDragEnterEvent *event) override;
     void dropEvent(QDropEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
 
 private slots:
     void reverbTypeChanged(int index);

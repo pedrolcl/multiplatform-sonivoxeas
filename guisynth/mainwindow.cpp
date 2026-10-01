@@ -476,3 +476,20 @@ void MainWindow::dropEvent(QDropEvent *event)
         }
     }
 }
+
+void MainWindow::resizeEvent(QResizeEvent *event)
+{
+    static const double initialWidth = event->size().width();
+    static const double octaveWidth = m_ui->pianoKeybd->width() / 2;
+    static const int initialNumKeys{25};
+    const int oldNumKeys = m_ui->pianoKeybd->numKeys();
+    const double diffWidth = event->size().width() - initialWidth;
+    if (diffWidth > 0) {
+        int plusOctaves = std::trunc(diffWidth / octaveWidth);
+        int newNumKeys = initialNumKeys + (plusOctaves * 12);
+        if (newNumKeys != oldNumKeys) {
+            //qDebug() << Q_FUNC_INFO << newNumKeys;
+            m_ui->pianoKeybd->setNumKeys(newNumKeys, 0);
+        }
+    }
+}
