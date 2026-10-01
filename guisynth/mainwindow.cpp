@@ -102,6 +102,7 @@ MainWindow::initializeSynth()
     m_ui->combo_Chorus->setCurrentIndex(chorus);
     m_ui->dial_Chorus->setValue(ProgramSettings::instance()->chorusLevel());
     m_ui->volumeSlider->setValue(ProgramSettings::instance()->volumeLevel());
+    m_ui->gainSlider->setValue(ProgramSettings::instance()->gain());
     m_ui->combo_sndlib->setCurrentIndex(ProgramSettings::instance()->soundLib() - 1);
     m_synth->program(0, m_ui->spinPgm->value());
     QFileInfo dlsInfo(ProgramSettings::instance()->Soundfont());
@@ -219,7 +220,7 @@ void MainWindow::setChorusLevel(int value)
 
 void MainWindow::setGain(int value)
 {
-    qDebug() << Q_FUNC_INFO << value;
+    //qDebug() << Q_FUNC_INFO << value;
     m_ui->gainSlider->setValue(value);
 }
 
@@ -255,12 +256,15 @@ void MainWindow::octaveChanged(int value)
 void MainWindow::volumeChanged(int value)
 {
     //qDebug() << Q_FUNC_INFO << value;
+    m_ui->lblVol->setNum(value);
     m_synth->setVolume(value);
     ProgramSettings::instance()->setVolumeLevel(value);
 }
 
 void MainWindow::gainChanged(int value)
 {
+    //qDebug() << Q_FUNC_INFO << value;
+    m_ui->lblGainValue->setNum(value);
     m_synth->setGain(value);
     ProgramSettings::instance()->setGain(value);
 }
