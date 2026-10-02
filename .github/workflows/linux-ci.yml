@@ -30,7 +30,7 @@ jobs:
       with:
         submodules: true
 
-    # - uses: dawidd6/action-download-artifact@v24
+    # - uses: dawidd6/action-download-artifact@v27
     #   with:
     #     name: ${{env.SONIVOXNAME}}-Linux-${{matrix.arch2}}-r44s16
     #     github_token: ${{secrets.GH_PAT}}
@@ -43,7 +43,7 @@ jobs:
     #   run: tar xvf ${{env.SONIVOXNAME}}.tar
 
     - name: Download Drumstick
-      uses: dawidd6/action-download-artifact@v24
+      uses: dawidd6/action-download-artifact@v27
       with:
         name: ${{env.DRUMSTICKNAME}}-${{matrix.arch}}.tar.gz
         github_token: ${{secrets.GH_PAT}}
