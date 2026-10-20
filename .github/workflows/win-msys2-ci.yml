@@ -9,8 +9,8 @@ on:
 
 env:
   BUILD_TYPE: RelWithDebInfo
-  INSTALL_LOCATION: SonivoxEAS
   DRUMSTICK: DrumstickV2
+  # INSTALL_LOCATION: SonivoxEAS
 
 jobs:
   build:
@@ -19,7 +19,7 @@ jobs:
         matrix:
           include:
             # { icon: '⬛', sys: mingw32 } # There are no 32 bit packages for Qt6 in msys2 anymore
-            - { icon: '🟦', sys: mingw64,    os: windows-latest }
+            # { icon: '🟦', sys: mingw64,    os: windows-latest }
             - { icon: '🟨', sys: ucrt64,     os: windows-latest }
             - { icon: '🟧', sys: clang64,    os: windows-latest }
             - { icon: '🟩', sys: clangarm64, os: windows-11-arm }
@@ -68,9 +68,9 @@ jobs:
         branch: devel
         skip_unpack: true
 
-    - name: '${{ matrix.icon }} Convert Drumstick location'
-      id: cnv
-      run: echo "dependencies=$(cygpath -m $MSYSTEM_PREFIX/bin);$(cygpath -m '${{github.workspace}}/${{env.DRUMSTICK}}/bin')" >> $GITHUB_OUTPUT
+    # - name: '${{ matrix.icon }} Convert Drumstick location'
+    #   id: cnv
+    #   run: echo "dependencies=$(cygpath -m $MSYSTEM_PREFIX/bin);$(cygpath -m '${{github.workspace}}/${{env.DRUMSTICK}}/bin')" >> $GITHUB_OUTPUT
 
     - name: '${{ matrix.icon }} Extract Drumstick'
       run: tar xvzf ${{env.DRUMSTICK}}-msys2-${{matrix.sys}}.tar.gz
@@ -81,36 +81,37 @@ jobs:
         cmake -B build
         -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
         -DCMAKE_PREFIX_PATH="${{env.DRUMSTICK}}"
-        -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_LOCATION}}
-        -DCPACK_SYSTEM_NAME=${{matrix.sys}}
-        -DDEPENDENCY_DIRS="${{steps.cnv.outputs.dependencies}}"
-        -DINSTALL_DEPENDENCIES=ON
+
+    # -DCMAKE_INSTALL_PREFIX=${{env.INSTALL_LOCATION}}
+    # -DCPACK_SYSTEM_NAME=${{matrix.sys}}
+    # -DDEPENDENCY_DIRS="${{steps.cnv.outputs.dependencies}}"
+    # -DINSTALL_DEPENDENCIES=ON
 
     - name: '${{ matrix.icon }} Build'
       run: cmake --build build --config ${{env.BUILD_TYPE}}
 
-    - name: '${{ matrix.icon }} Package'
-      run: cmake --build build --target package
+    # - name: '${{ matrix.icon }} Package'
+    #   run: cmake --build build --target package
 
-    - name: '${{ matrix.icon }} Install'
-      run: cmake --install build --config ${{env.BUILD_TYPE}}
+    # - name: '${{ matrix.icon }} Install'
+    #   run: cmake --install build --config ${{env.BUILD_TYPE}}
 
-    - name: '${{ matrix.icon }} Create Archive'
-      run: tar cvf ${{env.INSTALL_LOCATION}}.tar ${{env.INSTALL_LOCATION}}
+    # - name: '${{ matrix.icon }} Create Archive'
+    #   run: tar cvf ${{env.INSTALL_LOCATION}}.tar ${{env.INSTALL_LOCATION}}
 
-    - name: '${{ matrix.icon }} Upload Artifacts'
-      uses: actions/upload-artifact@v7
-      with:
-        name: ${{env.INSTALL_LOCATION}}-msys2-${{matrix.sys}}
-        path: ${{env.INSTALL_LOCATION}}.tar
-        retention-days: 90
-        overwrite: true
+    # - name: '${{ matrix.icon }} Upload Artifacts'
+    #   uses: actions/upload-artifact@v7
+    #   with:
+    #     name: ${{env.INSTALL_LOCATION}}-msys2-${{matrix.sys}}
+    #     path: ${{env.INSTALL_LOCATION}}.tar
+    #     retention-days: 90
+    #     overwrite: true
 
-    - name: '${{ matrix.icon }} Upload Installer'
-      uses: actions/upload-artifact@v7
-      with:
-        name: sonivoxeas-msys2-installer-${{matrix.sys}}
-        path: ${{github.workspace}}/build/sonivoxeas-${{steps.configuration.outputs.config_version}}-${{matrix.sys}}.exe
-        retention-days: 90
-        overwrite: true
-        archive: false
+    # - name: '${{ matrix.icon }} Upload Installer'
+    #   uses: actions/upload-artifact@v7
+    #   with:
+    #     name: sonivoxeas-msys2-installer-${{matrix.sys}}
+    #     path: ${{github.workspace}}/build/sonivoxeas-${{steps.configuration.outputs.config_version}}-${{matrix.sys}}.exe
+    #     retention-days: 90
+    #     overwrite: true
+    #     archive: false
