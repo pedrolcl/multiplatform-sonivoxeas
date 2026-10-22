@@ -33,22 +33,22 @@ install( TARGETS mp_guisynth
          RUNTIME_DEPENDENCY_SET sonivoxeas-dependencies
 )
 
-install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/icon.png
+install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/sonivoxeas.png
          DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/128x128/apps
          RENAME sonivoxeas.png )
 
-install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/icon256.png
+install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/sonivoxeas256.png
          DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/256x256/apps
          RENAME sonivoxeas.png )
 
-install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/icon512.png
+install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/sonivoxeas512.png
          DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/512x512/apps
          RENAME sonivoxeas.png )
 
-install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/mp_guisynth.desktop
+install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/sonivoxeas.desktop
          DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
          RENAME sonivoxeas.desktop )
 
- install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/icon.svg
+ install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/sonivoxeas.svg
           DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps
           RENAME sonivoxeas.svg )

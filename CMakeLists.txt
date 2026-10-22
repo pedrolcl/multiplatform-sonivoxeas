@@ -247,6 +247,6 @@ cpack_add_component(sonivoxeas_application
   DESCRIPTION "SonivoxEAS CLI and GUI Programs"
   DEPENDS sonivoxeas_runtime)
 cpack_add_component(sonivoxeas_development
-  DISPLAY_NAME "C Headers and import libraries"
-  DESCRIPTION "C headers and import libraries for developing with SonivoxEAS"
+  DISPLAY_NAME "Headers and import libraries"
+  DESCRIPTION "headers and import libraries for developing with SonivoxEAS"
   DEPENDS sonivoxeas_runtime)

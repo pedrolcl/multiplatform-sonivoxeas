@@ -1,6 +1,6 @@
 <RCC>
     <qresource prefix="/">
-        <file>icon.png</file>
+        <file>sonivoxeas.png</file>
         <file>open.png</file>
         <file>play.png</file>
         <file>stop.png</file>
