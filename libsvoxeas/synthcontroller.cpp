@@ -39,7 +39,7 @@ SynthController::SynthController(int bufTime, QObject *parent)
 #endif
     updateAudioDevices();
     initAudio();
-    connect(&m_stallDetector, &QTimer::timeout, this, [=]{
+    connect(&m_stallDetector, &QTimer::timeout, this, [this] {
         if (m_running) {
             if (m_renderer->lastBufferSize() == 0) {
                 emit stallDetected();
@@ -88,10 +88,10 @@ SynthController::start()
     auto bufferTime = m_format.durationForBytes(m_audioOutput->bufferSize()) / 1000;
     // qDebug() << Q_FUNC_INFO << "Applied Audio Output buffer size:" << m_audioOutput->bufferSize()
     //          << "bytes," << bufferTime << "milliseconds";
-    QTimer::singleShot(bufferTime * 2, this, [=]{
+    QTimer::singleShot(bufferTime * 2, this, [this, bufferTime] {
         m_running = true;
         m_stallDetector.start(bufferTime * 4);
-     });
+    });
     emit synthStarted();
 }
 
@@ -128,15 +128,23 @@ SynthController::initAudio()
         m_audioOutput = new QAudioOutput(m_audioDevice, m_format);
         m_audioOutput->setCategory("MIDI Synthesizer");
         QObject::connect(m_audioOutput, &QAudioOutput::stateChanged, this, [=](QAudio::State state) {
-#else
-        m_audioOutput = new QAudioSink(m_audioDevice, m_format);
-        QObject::connect(m_audioOutput, &QAudioSink::stateChanged, this, [=](QAudio::State state) {
-#endif
-            // qDebug() << "Audio Output state:" << state << "error:" << m_audioOutput->error();
-            if (m_running && (m_audioOutput->error() == QAudio::UnderrunError)) {
+            // qDebug() << "Audio Output state:" << state;
+            if (m_running && (state == QAudio::IdleState)) {
                 emit underrunDetected();
             }
         });
+#else
+        m_audioOutput = new QAudioSink(m_audioDevice, m_format);
+        QObject::connect(m_audioOutput,
+                         &QAudioSink::stateChanged,
+                         this,
+                         [this](QtAudio::State state) {
+                             // qDebug() << "Audio Output state:" << state;
+                             if (m_running && (state == QtAudio::IdleState)) {
+                                 emit underrunDetected();
+                             }
+                         });
+#endif
     }
 }
 
@@ -146,7 +154,7 @@ void SynthController::updateAudioDevices()
 #if QT_VERSION < QT_VERSION_CHECK(6,0,0)
     const auto devices = QAudioDeviceInfo::availableDevices(QAudio::AudioOutput);
     m_audioDevice = QAudioDeviceInfo::defaultOutputDevice();
-    foreach(auto &dev, devices) {
+    foreach (auto &dev, devices) {
         // qDebug() << Q_FUNC_INFO << dev.deviceName() << dev.isFormatSupported(m_format);
         if (dev.isFormatSupported(m_format)) {
             m_availableDevices.insert(dev.deviceName(), dev);
@@ -254,9 +262,15 @@ void SynthController::setBufferSize(int milliseconds)
 void SynthController::setVolume(int volume)
 {
     //qDebug() << Q_FUNC_INFO << volume;
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     qreal linearVolume = QAudio::convertVolume(volume / 100.0,
                                                QAudio::LogarithmicVolumeScale,
                                                QAudio::LinearVolumeScale);
+#else
+    qreal linearVolume = QtAudio::convertVolume(volume / 100.0,
+                                                QtAudio::LogarithmicVolumeScale,
+                                                QtAudio::LinearVolumeScale);
+#endif
     if (m_audioOutput) {
         m_audioOutput->setVolume(linearVolume);
     }

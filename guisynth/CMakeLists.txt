@@ -3,8 +3,8 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-set( SOURCES main.cpp mainwindow.cpp )
-set( HEADERS mainwindow.h )
+set( SOURCES main.cpp mainwindow.cpp KDSignalThrottler.cpp)
+set( HEADERS mainwindow.h KDSignalThrottler.h)
 set( FORMS mainwindow.ui )
 set( RESOURCES guisynth.qrc )
 

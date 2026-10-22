@@ -19,8 +19,9 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QMainWindow>
 #include <QFileInfo>
+#include <QMainWindow>
+#include "KDSignalThrottler.h"
 #include "synthcontroller.h"
 
 enum PlayerState {
@@ -92,6 +93,7 @@ private:
     QString m_songFile;
     QString m_soundFont;
     PlayerState m_state;
+    KDToolBox::KDSignalLeadingDebouncer *m_throttler;
 };
 
 #endif // MAINWINDOW_H

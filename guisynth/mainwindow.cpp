@@ -20,6 +20,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QMimeData>
+#include <cmath>
 
 #include "mainwindow.h"
 #include "programsettings.h"
@@ -33,6 +34,8 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     m_ui->setupUi(this);
     m_synth = new SynthController(ProgramSettings::instance()->bufferTime(), this);
+    m_throttler = new KDToolBox::KDSignalLeadingDebouncer(this);
+    m_throttler->setTimeout(2500);
 
     m_ui->combo_Device->addItems(m_synth->availableAudioDevices());
     m_ui->combo_Device->setCurrentText(ProgramSettings::instance()->audioDeviceName());
@@ -72,7 +75,15 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_synth, SIGNAL(midiNoteOn(int, int)), this, SLOT(showNoteOn(int, int)));
     connect(m_synth, SIGNAL(midiNoteOff(int, int)), this, SLOT(showNoteOff(int, int)));
     connect(m_synth, SIGNAL(playbackStopped()), this, SLOT(songStopped()));
-    connect(m_synth, &SynthController::underrunDetected, this, &MainWindow::underrunMessage);
+
+    connect(m_synth,
+            &SynthController::underrunDetected,
+            m_throttler,
+            &KDToolBox::KDSignalLeadingDebouncer::throttle);
+    connect(m_throttler,
+            &KDToolBox::KDSignalLeadingDebouncer::triggered,
+            this,
+            &MainWindow::underrunMessage);
     connect(m_synth, &SynthController::stallDetected, this, &MainWindow::stallMessage);
     connect(m_synth, &SynthController::synthStarted, this, &MainWindow::initializeSynth);
     connect(m_synth, &SynthController::chorusLevelChanged, this, &MainWindow::setChorusLevel);
