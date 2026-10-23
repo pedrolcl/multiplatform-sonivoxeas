@@ -26,7 +26,7 @@ if (POLICY CMP0153)
     cmake_policy(SET CMP0153 NEW)
 endif()
 
-project( multiplatform_sonivoxeas
+project( multiplatform-sonivoxeas
          VERSION 2.2.1
          LANGUAGES CXX
          DESCRIPTION "Multiplatform Sonivox EAS for Qt" )
