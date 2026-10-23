@@ -16,8 +16,8 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-//#include <QDebug>
 #include <QMessageBox>
+#include <cstdlib>
 
 #include "synthcontroller.h"
 #include "synthrenderer.h"
@@ -122,17 +122,18 @@ SynthController::stop()
 void
 SynthController::initAudio()
 {
-    //qDebug() << Q_FUNC_INFO << "audio device:" << m_audioDevice.description();
+    // qDebug() << Q_FUNC_INFO << "audio device:" << m_audioDevice.description() << m_audioDevice.preferredFormat();
     if (!m_audioDevice.isFormatSupported(m_format)) {
         QMessageBox::critical(nullptr,
                               "Audio format not supported",
-                              QString("Device: %1\nformat: %2 Hz, %3 channels, %4 bits")
+                              QString("Audio format not supported by device: %1\nformat: %2 Hz, %3 "
+                                      "channels, %4 bits.\nAborting!")
                                   .arg(m_audioDevice.description())
                                   .arg(m_format.sampleRate())
                                   .arg(m_format.channelCount())
                                   .arg(m_format.bytesPerSample() * 8));
         //qCritical() << Q_FUNC_INFO << "Audio format not supported" << m_format;
-        return;
+        std::exit(1);
     }
     Q_ASSERT_X(m_audioOutput == nullptr, Q_FUNC_INFO, "m_audioOutput is not null");
     if (!m_audioOutput) {
