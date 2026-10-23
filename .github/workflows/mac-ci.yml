@@ -41,7 +41,7 @@ jobs:
         allow_forks: false
 
     - name: Extract downloaded artifact
-      run: tar xvzf ${{env.DRUMSTICKNAME}}-${{matrix.arch}}.macos.tar.gz
+      run: tar xvzf ${{env.DRUMSTICKNAME}}-${{matrix.arch}}-macos.tar.gz
 
     - name: 'Install Qt'
       uses: jurplel/install-qt-action@v4
