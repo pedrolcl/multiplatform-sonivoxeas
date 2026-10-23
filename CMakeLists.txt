@@ -64,7 +64,7 @@ endif()
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Gui Widgets Multimedia)
 
 if (NOT USE_QT5)
-    qt6_standard_project_setup()
+    qt6_standard_project_setup(REQUIRES 6.5)
 endif()
 
 find_package(Drumstick 2.11 COMPONENTS RT Widgets REQUIRED)
@@ -81,7 +81,9 @@ if (sonivox_FOUND)
     # include(CMakePrintHelpers)
     # cmake_print_properties(TARGETS sonivox::sonivox PROPERTIES LOCATION)
 else()
-    add_subdirectory(sonivox)
+    set(BUILD_TESTING OFF)
+    set(BUILD_APPLICATION OFF)
+    add_subdirectory(sonivox EXCLUDE_FROM_ALL)
     # include(CMakePrintHelpers)
     # cmake_print_properties(TARGETS sonivox::sonivox PROPERTIES TYPE VERSION SOVERSION)
 endif()
@@ -122,15 +124,17 @@ if (INSTALL_DEPENDENCIES AND QT_VERSION VERSION_GREATER_EQUAL 6.5 )
                 POST_EXCLUDE_REGEXES ${_post_exclude}
                 RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
                 LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
-    else()
-        message(WARNING "Sonivox package not found")
+    # else()
+    #     message(WARNING "Sonivox package not found")
     endif()
 
     if (Drumstick_FOUND)
         install(IMPORTED_RUNTIME_ARTIFACTS Drumstick::RT
+                FRAMEWORK DESTINATION mp_guisynth.app/Contents/Frameworks
                 RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
                 LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
         install(IMPORTED_RUNTIME_ARTIFACTS Drumstick::Widgets
+                FRAMEWORK DESTINATION mp_guisynth.app/Contents/Frameworks
                 RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
                 LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
         if (${CMAKE_SYSTEM} MATCHES "Linux")
@@ -150,7 +154,11 @@ if (INSTALL_DEPENDENCIES AND QT_VERSION VERSION_GREATER_EQUAL 6.5 )
             set(_drumstick_plugins ${Drumstick_DIR}/lib/drumstick2)
         endif()
         if (EXISTS ${_drumstick_plugins})
-            set(CMAKE_INSTALL_PLUGINS "plugins")
+            if(APPLE)
+              set(CMAKE_INSTALL_PLUGINS "mp_guisynth.app/Contents/PlugIns")
+            else()
+              set(CMAKE_INSTALL_PLUGINS "plugins")
+            endif()
             install(DIRECTORY ${_drumstick_plugins}
                     DESTINATION ${CMAKE_INSTALL_PLUGINS})
         else()
@@ -176,18 +184,18 @@ if (INSTALL_DEPENDENCIES AND QT_VERSION VERSION_GREATER_EQUAL 6.5 )
         )
         set(CMAKE_INSTALL_SYSTEM_RUNTIME_COMPONENT sonivoxeas_runtime)
         include ( InstallRequiredSystemLibraries )
-    elseif(WIN32 AND NOT MSVC)
-        qt_generate_deploy_app_script(
-            TARGET mp_guisynth
-            OUTPUT_SCRIPT deploy_script
-            NO_UNSUPPORTED_PLATFORM_ERROR
-            NO_TRANSLATIONS
-        )
     elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         qt_generate_deploy_app_script(
             TARGET mp_guisynth
             OUTPUT_SCRIPT deploy_script
             INCLUDE_PLUGINS xcb wayland
+            NO_UNSUPPORTED_PLATFORM_ERROR
+            NO_TRANSLATIONS
+        )
+    else()
+        qt_generate_deploy_app_script(
+            TARGET mp_guisynth
+            OUTPUT_SCRIPT deploy_script
             NO_UNSUPPORTED_PLATFORM_ERROR
             NO_TRANSLATIONS
         )
@@ -219,14 +227,14 @@ if (DEFINED ENV{GITHUB_OUTPUT})
 endif()
 
 # CPack support
-set ( CPACK_PACKAGE_DESCRIPTION_SUMMARY "Multiplatform Sonivox EAS synthesizer" )
-set ( CPACK_PACKAGE_VENDOR "https://github.com/pedrolcl/multiplatform_sonivoxeas" )
+set ( CPACK_PACKAGE_DESCRIPTION_SUMMARY "Multiplatform Sonivox EAS Synthesizer" )
+set ( CPACK_PACKAGE_VENDOR "https://github.com/pedrolcl/multiplatform-sonivoxeas" )
 set ( CPACK_PACKAGE_DESCRIPTION_FILE "${PROJECT_SOURCE_DIR}/README.md" )
 set ( CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE" )
 set ( CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR} )
 set ( CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR} )
 set ( CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH} )
-set ( CPACK_PACKAGE_EXECUTABLES "mp_guisynth;SonivoxEAS" )
+set ( CPACK_PACKAGE_EXECUTABLES "mp_guisynth" "SonivoxEAS" )
 
 # source packages
 set ( CPACK_SOURCE_IGNORE_FILES "/.git/;/build/;~$;${CPACK_SOURCE_IGNORE_FILES}" )
@@ -236,6 +244,25 @@ set ( CPACK_SOURCE_STRIP_FILES OFF )
 # binary packages
 set ( CPACK_PACKAGE_NAME sonivoxeas )
 set ( CPACK_STRIP_FILES ON )
+
+# Windows NSIS setup package
+if (WIN32)
+    set (CPACK_NSIS_DISPLAY_NAME "Multiplatform Sonivox EAS Synthesizer")
+    set (CPACK_NSIS_WELCOME_TITLE_3LINES ON)
+    set (CPACK_NSIS_FINISH_TITLE_3LINES ON)
+    set (CPACK_NSIS_HELP_LINK "https://github.com/pedrolcl/multiplatform-sonivoxeas")
+    set (CPACK_NSIS_URL_INFO_ABOUT "https://github.com/pedrolcl/multiplatform-sonivoxeas")
+    set (CPACK_NSIS_CONTACT "plcl@users.sf.net")
+endif ()
+
+if(APPLE)
+    set (CPACK_SYSTEM_NAME "macOS")
+    set (CPACK_PRE_BUILD_SCRIPTS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/ThinFrameworks.cmake")
+    set (CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-v${PROJECT_VERSION}-macOS-${CMAKE_SYSTEM_PROCESSOR}")
+    set (CPACK_BINARY_ZIP ON)
+    set (CPACK_BINARY_TGZ OFF)
+    set (CPACK_BINARY_STGZ OFF)
+endif()
 
 include ( CPack )
 

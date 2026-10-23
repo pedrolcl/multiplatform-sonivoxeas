@@ -17,6 +17,8 @@
 */
 
 //#include <QDebug>
+#include <QMessageBox>
+
 #include "synthcontroller.h"
 #include "synthrenderer.h"
 
@@ -82,12 +84,15 @@ SynthController::start()
     }
     if (!m_audioOutput) {
         initAudio();
+        if (!m_audioOutput) {
+            return;
+        }
     }
     m_audioOutput->setBufferSize(bufferBytes);
     m_audioOutput->start(m_renderer);
     auto bufferTime = m_format.durationForBytes(m_audioOutput->bufferSize()) / 1000;
-    // qDebug() << Q_FUNC_INFO << "Applied Audio Output buffer size:" << m_audioOutput->bufferSize()
-    //          << "bytes," << bufferTime << "milliseconds";
+    //qDebug() << Q_FUNC_INFO << "Applied Audio Output buffer size:" << m_audioOutput->bufferSize()
+    //<< "bytes," << bufferTime << "milliseconds";
     QTimer::singleShot(bufferTime * 2, this, [this, bufferTime] {
         m_running = true;
         m_stallDetector.start(bufferTime * 4);
@@ -117,9 +122,16 @@ SynthController::stop()
 void
 SynthController::initAudio()
 {
-    // qDebug() << Q_FUNC_INFO << "audio device:" << m_audioDevice.description();
+    //qDebug() << Q_FUNC_INFO << "audio device:" << m_audioDevice.description();
     if (!m_audioDevice.isFormatSupported(m_format)) {
-        qCritical() << Q_FUNC_INFO << "Audio format not supported" << m_format;
+        QMessageBox::critical(nullptr,
+                              "Audio format not supported",
+                              QString("Device: %1\nformat: %2 Hz, %3 channels, %4 bits")
+                                  .arg(m_audioDevice.description())
+                                  .arg(m_format.sampleRate())
+                                  .arg(m_format.channelCount())
+                                  .arg(m_format.bytesPerSample() * 8));
+        //qCritical() << Q_FUNC_INFO << "Audio format not supported" << m_format;
         return;
     }
     Q_ASSERT_X(m_audioOutput == nullptr, Q_FUNC_INFO, "m_audioOutput is not null");
@@ -251,7 +263,7 @@ SynthController::setAudioDeviceName(const QString newName)
 
 void SynthController::setBufferSize(int milliseconds)
 {
-    //qDebug() << Q_FUNC_INFO << milliseconds;
+    // qDebug() << Q_FUNC_INFO << milliseconds;
     if (milliseconds != m_requestedBufferTime) {
         stop();
         m_requestedBufferTime = milliseconds;

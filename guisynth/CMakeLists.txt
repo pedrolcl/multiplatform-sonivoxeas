@@ -55,27 +55,30 @@ if (APPLE)
 endif()
 
 install( TARGETS mp_guisynth
-         DESTINATION ${CMAKE_INSTALL_BINDIR}
-         COMPONENT sonivoxeas_application
          RUNTIME_DEPENDENCY_SET sonivoxeas-dependencies
+         BUNDLE DESTINATION .
+         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+         COMPONENT sonivoxeas_application
 )
 
-install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/sonivoxeas.png
-         DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/128x128/apps
-         RENAME sonivoxeas.png )
+if (UNIX AND NOT APPLE)
+    install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/sonivoxeas.png
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/128x128/apps
+    RENAME sonivoxeas.png )
 
-install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/sonivoxeas256.png
-         DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/256x256/apps
-         RENAME sonivoxeas.png )
+    install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/sonivoxeas256.png
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/256x256/apps
+    RENAME sonivoxeas.png )
 
-install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/sonivoxeas512.png
-         DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/512x512/apps
-         RENAME sonivoxeas.png )
+    install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/sonivoxeas512.png
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/512x512/apps
+    RENAME sonivoxeas.png )
 
-install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/sonivoxeas.desktop
-         DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
-         RENAME sonivoxeas.desktop )
+    install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/sonivoxeas.desktop
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
+    RENAME sonivoxeas.desktop )
 
- install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/sonivoxeas.svg
-          DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps
-          RENAME sonivoxeas.svg )
+    install( FILES ${CMAKE_CURRENT_SOURCE_DIR}/sonivoxeas.svg
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps
+    RENAME sonivoxeas.svg )
+endif()

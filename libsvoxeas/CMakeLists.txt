@@ -46,6 +46,7 @@ target_link_libraries( mp_svoxeas
     PUBLIC
         sonivox::sonivox
         Qt${QT_VERSION_MAJOR}::Core
+        Qt${QT_VERSION_MAJOR}::Widgets
         Qt${QT_VERSION_MAJOR}::Multimedia
     PRIVATE
         Drumstick::RT
@@ -62,18 +63,18 @@ target_compile_definitions( mp_svoxeas PRIVATE
     $<$<CONFIG:RELEASE>:QT_NO_DEBUG_OUTPUT>
 )
 
-install( TARGETS mp_svoxeas
-         RUNTIME_DEPENDENCY_SET sonivoxeas-dependencies
-         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-                 COMPONENT sonivoxeas_runtime
-         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-                 COMPONENT sonivoxeas_development
-         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-                 COMPONENT sonivoxeas_runtime
-                 NAMELINK_COMPONENT sonivox_development
-        )
+if (NOT APPLE)
+    install( TARGETS mp_svoxeas
+             RUNTIME_DEPENDENCY_SET sonivoxeas-dependencies
+             RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+                     COMPONENT sonivoxeas_runtime
+             ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                     COMPONENT sonivoxeas_development
+             LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                     COMPONENT sonivoxeas_runtime
+                     NAMELINK_COMPONENT sonivox_development )
 
-install ( FILES ${HEADERS}
-          DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/sonivoxeas
-          COMPONENT sonivoxeas_development
-        )
+    install ( FILES ${HEADERS}
+              DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/sonivoxeas
+              COMPONENT sonivoxeas_development )
+endif()
