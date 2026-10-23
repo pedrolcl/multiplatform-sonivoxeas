@@ -47,6 +47,7 @@ jobs:
       uses: jurplel/install-qt-action@v4
       with:
         version: '6.8.3'
+        modules: qtmultimedia
 
     - name: 'Configure CMake'
       id: configuration
