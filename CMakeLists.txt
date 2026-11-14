@@ -27,7 +27,7 @@ if (POLICY CMP0153)
 endif()
 
 project( multiplatform-sonivoxeas
-         VERSION 2.2.1
+         VERSION 2.3.0
          LANGUAGES CXX
          DESCRIPTION "Multiplatform Sonivox EAS for Qt" )
 

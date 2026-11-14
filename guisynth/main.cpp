@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
     QApplication::setStyle("fusion");
     QApplication app(argc, argv);
     QApplication::setOrganizationName("SonivoxEAS");
-    QApplication::setApplicationName("mp_GUISynth");
+    QApplication::setApplicationName("mp_guisynth");
     QApplication::setApplicationVersion(QT_STRINGIFY(VERSION));
     QApplication::setDesktopFileName("sonivoxeas");
     QApplication::setWindowIcon(QIcon(":/icon.png"));
